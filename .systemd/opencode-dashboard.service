@@ -1,0 +1,27 @@
+[Unit]
+Description=OpenCode Operations Dashboard
+After=network.target opencode.service akm-bridge.service
+
+[Service]
+Type=simple
+ExecStart=/root/.bun/bin/bun run /root/projekt/akm-bridge/src/dashboard/server.ts
+WorkingDirectory=/root/projekt/akm-bridge
+Restart=on-failure
+RestartSec=10
+User=root
+Environment=DASHBOARD_PORT=4200
+Environment=DASHBOARD_HOST=127.0.0.1
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/root/.config/opencode /root/.local/state /root/projekt/akm-bridge
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

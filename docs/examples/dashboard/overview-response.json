@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-07T15:00:00Z",
+  "overall": {
+    "status": "healthy",
+    "summary": "All components operational",
+    "version": "1.16.0",
+    "uptime": "16h",
+    "agentsTotal": 13,
+    "commandsTotal": 22,
+    "skillsTotal": 23,
+    "mcpHealthy": 7,
+    "mcpTotal": 7,
+    "recoveryState": "HEALTHY",
+    "lastCI": "success",
+    "lastE2E": "16/16 PASS",
+    "alertsCritical": 0,
+    "alertsWarning": 1
+  },
+  "alerts": [
+    {
+      "id": "dr-clean-server",
+      "severity": "warning",
+      "component": "disaster-recovery",
+      "title": "Clean-server drill not executed",
+      "summary": "Documented but never executed in isolated environment",
+      "firstSeen": "2026-06-07T12:52:00Z",
+      "lastSeen": "2026-06-07T15:00:00Z",
+      "acknowledged": false,
+      "recommendedAction": "Execute clean-server drill on isolated VM"
+    }
+  ],
+  "limitations": [
+    "Clean-server drill documented but not executed in isolated VM/container",
+    "Full drill requires isolated VM or dedicated test user",
+    "Secrets provisioning is interactive — no automated secret manager integration"
+  ]
+}

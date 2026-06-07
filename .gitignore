@@ -11,3 +11,6 @@ coverage/
 package-lock.json
 data/
 .DS_Store
+
+# Dashboard runtime
+dashboard-cache.json

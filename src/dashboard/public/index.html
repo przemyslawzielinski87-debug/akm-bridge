@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCode Ops</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1c2128;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-dim: #8b949e;
+      --text-bright: #f0f6fc;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --orange: #db6d28;
+      --purple: #bc8cff;
+      --header-bg: #010409;
+      --section-bg: #0d1117;
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-title { font-size: 1.2rem; font-weight: 700; color: var(--text-bright); }
+    .header-right { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; color: var(--text-dim); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-badge.healthy { background: rgba(63,185,80,0.15); color: var(--green); }
+    .status-badge.healthy::before { background: var(--green); }
+    .status-badge.degraded { background: rgba(210,153,34,0.15); color: var(--yellow); }
+    .status-badge.degraded::before { background: var(--yellow); }
+    .status-badge.failed { background: rgba(248,81,73,0.15); color: var(--red); }
+    .status-badge.failed::before { background: var(--red); }
+    .status-badge.unknown { background: rgba(139,148,158,0.15); color: var(--text-dim); }
+    .status-badge.unknown::before { background: var(--text-dim); }
+    .status-badge.not_run { background: rgba(139,148,158,0.1); color: var(--text-dim); }
+    .status-badge.not_run::before { background: var(--text-dim); }
+
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover { background: var(--card-hover); }
+    .btn:active { transform: scale(0.97); }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Sections ── */
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+      min-height: 48px;
+      gap: 8px;
+    }
+    .section-header:hover { background: var(--card-hover); }
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-header .chevron {
+      transition: transform 0.2s;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+    .section-header.collapsed .chevron { transform: rotate(-90deg); }
+    .section-body {
+      padding: 0 16px 16px;
+      display: block;
+    }
+    .section-body.hidden { display: none; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-icon {
+      font-size: 1.2rem;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: var(--card);
+    }
+    .card-body { flex: 1; min-width: 0; }
+    .card-title { font-weight: 600; color: var(--text-bright); font-size: 0.9rem; }
+    .card-subtitle { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+    .card-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Stats grid ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* ── Bar chart ── */
+    .bar-chart { margin-top: 8px; }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+    }
+    .bar-label { width: 80px; color: var(--text-dim); text-align: right; flex-shrink: 0; }
+    .bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .bar-fill.green { background: var(--green); }
+    .bar-fill.red { background: var(--red); }
+    .bar-fill.yellow { background: var(--yellow); }
+    .bar-fill.blue { background: var(--accent); }
+    .bar-fill.purple { background: var(--purple); }
+    .bar-value { width: 50px; color: var(--text-dim); font-size: 0.75rem; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid;
+    }
+    .alert.critical { background: rgba(248,81,73,0.1); border-color: var(--red); }
+    .alert.warning { background: rgba(210,153,34,0.1); border-color: var(--yellow); }
+    .alert.info { background: rgba(88,166,255,0.1); border-color: var(--accent); }
+    .alert-title { font-weight: 600; font-size: 0.9rem; }
+    .alert.critical .alert-title { color: var(--red); }
+    .alert.warning .alert-title { color: var(--yellow); }
+    .alert.info .alert-title { color: var(--accent); }
+    .alert-body { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+    .alert-action { font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; font-style: italic; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+    }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header { padding: 10px 12px; }
+      .header-title { font-size: 1rem; }
+      .container { padding: 8px; }
+      .grid { gap: 8px; }
+      .section-header { padding: 10px 12px; }
+      .section-body { padding: 0 12px 12px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .stat-value { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="header-title">OpenCode Ops</span>
+    <span id="overall-badge" class="status-badge unknown">Loading</span>
+  </div>
+  <div class="header-right">
+    <span id="last-refresh"></span>
+    <button class="btn" onclick="refreshAll()" aria-label="Refresh">Refresh</button>
+  </div>
+</header>
+
+<main class="container">
+  <div class="grid" id="sections"></div>
+</main>
+
+<script>
+const API_BASE = '';
+const REFRESH_INTERVAL = 30_000;
+let refreshTimer = null;
+
+/* ── API ── */
+async function apiFetch(section) {
+  try {
+    const r = await fetch(`${API_BASE}/api/dashboard/${section}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    return { ok: false, error: e.message, data: null };
+  }
+}
+
+/* ── Helpers ── */
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'class') el.className = v;
+    else if (k === 'onclick') el.onclick = v;
+    else el.setAttribute(k, v);
+  });
+  children.flat().forEach(c => {
+    if (typeof c === 'string') el.appendChild(document.createTextNode(c));
+    else if (c) el.appendChild(c);
+  });
+  return el;
+}
+
+function badge(status) {
+  return h('span', { class: `status-badge ${status}` }, status.replace('_', ' '));
+}
+
+function ago(ts) {
+  if (!ts) return '';
+  const s = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+}
+
+function icon(name) {
+  const icons = {
+    healthy: '\u2705', degraded: '\u26A0\uFE0F', failed: '\u274C', unknown: '\u2753', not_run: '\u23F8\uFE0F',
+    agent: '\uD83E\uDD16', command: '\u2328\uFE0F', skill: '\u2728', mcp: '\uD83D\uDD17',
+    akm: '\uD83D\uDCDA', token: '\uD83D\uDCCB', context: '\uD83E\uDDE0', permission: '\uD83D\uDD12',
+    recovery: '\uD83D\uDD04', update: '\u2B06\uFE0F', e2e: '\uD83D\uDEE1\uFE0F', ci: '\u2699\uFE0F',
+    dr: '\uD83D\uDEA8', learning: '\uD83D\uDCD6', system: '\uD83D\uDCBB', alert: '\uD83D\uDD14',
+    event: '\uD83D\uDCC5',
+  };
+  return icons[name] || '\u2753';
+}
+
+function bar(value, max, color) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  return h('div', { class: 'bar-track' },
+    h('div', { class: `bar-fill ${color}`, style: `width:${pct}%` })
+  );
+}
+
+function emptyState(msg) {
+  return h('div', { class: 'empty' }, msg);
+}
+
+function loadingState() {
+  return h('div', { class: 'loading' }, 'Loading');
+}
+
+/* ── Section builders ── */
+const sections = [
+  { id: 'overview', title: 'Overall', icon: '\uD83D\uDCCA', build: buildOverview },
+  { id: 'alerts', title: 'Alerts', icon: '\uD83D\uDD14', build: buildAlerts },
+  { id: 'opencode', title: 'OpenCode', icon: '\u2699\uFE0F', build: buildOpenCode },
+  { id: 'mcp', title: 'MCP Servers', icon: '\uD83D\uDD17', build: buildMCP },
+  { id: 'akm', title: 'AKM', icon: '\uD83D\uDCDA', build: buildAKM },
+  { id: 'agents', title: 'Agents', icon: '\uD83E\uDD16', build: buildAgents },
+  { id: 'commands', title: 'Commands', icon: '\u2328\uFE0F', build: buildCommands },
+  { id: 'skills', title: 'Skills', icon: '\u2728', build: buildSkills },
+  { id: 'tokens', title: 'Tokens', icon: '\uD83D\uDCCB', build: buildTokens },
+  { id: 'context', title: 'Context', icon: '\uD83E\uDDE0', build: buildContext },
+  { id: 'permissions', title: 'Permissions', icon: '\uD83D\uDD12', build: buildPermissions },
+  { id: 'recovery', title: 'Recovery', icon: '\uD83D\uDD04', build: buildRecovery },
+  { id: 'updates', title: 'Updates', icon: '\u2B06\uFE0F', build: buildUpdates },
+  { id: 'e2e', title: 'CI / E2E', icon: '\uD83D\uDEE1\uFE0F', build: buildE2E },
+  { id: 'disaster-recovery', title: 'Disaster Recovery', icon: '\uD83D\uDEA8', build: buildDR },
+  { id: 'learning', title: 'Learning', icon: '\uD83D\uDCD6', build: buildLearning },
+  { id: 'system', title: 'System', icon: '\uD83D\uDCBB', build: buildSystem },
+];
+
+function buildOverview(d) {
+  if (!d) return emptyState('No data');
+  const stats = h('div', { class: 'stats' });
+  const components = d.components || {};
+  Object.entries(components).forEach(([name, status]) => {
+    stats.appendChild(h('div', { class: 'stat' },
+      h('div', { class: `status-badge ${status}` }, status),
+      h('div', { class: 'stat-label' }, name)
+    ));
+  });
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.alertCount?.toString() || '0'),
+        h('div', { class: 'stat-label' }, 'Alerts')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.schemaVersion || '-'),
+        h('div', { class: 'stat-label' }, 'Schema')
+      )
+    ),
+    stats
+  );
+}
+
+function buildAlerts(d) {
+  if (!d || !Array.isArray(d) || d.length === 0) return emptyState('No alerts');
+  const frag = document.createDocumentFragment();
+  d.forEach(a => {
+    frag.appendChild(h('div', { class: `alert ${a.severity}` },
+      h('div', { class: 'alert-title' }, `${a.title} [${a.component}]`),
+      h('div', { class: 'alert-body' }, a.summary),
+      h('div', { class: 'alert-action' }, `Action: ${a.recommendedAction}`)
+    ));
+  });
+  return frag;
+}
+
+function buildOpenCode(d) {
+  if (!d) return emptyState('No data');
+  return h('div', null,
+    h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('update')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Runtime'),
+        h('div', { class: 'card-subtitle' }, d.summary || '-'),
+        h('div', { class: 'card-meta' }, `Source: ${d.source || '-'} | ${ago(d.updatedAt)}`)
+      )
+    )
+  );
+}
+
+function buildMCP(d) {
+  if (!d?.servers) return emptyState('No MCP data');
+  const frag = document.createDocumentFragment();
+  d.servers.forEach(s => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('mcp')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, s.name),
+        h('div', { class: 'card-subtitle' }, `${s.transport} | ${s.enabled ? 'enabled' : 'disabled'}`),
+        h('div', { class: 'card-meta' },
+          badge(s.status),
+          s.toolsCount > 0 ? ` | ${s.toolsCount} tools` : '',
+          s.latencyMs != null ? ` | ${s.latencyMs}ms` : '',
+          s.lastError ? ` | Error: ${s.lastError}` : ''
+        )
+      )
+    ));
+  });
+  return frag;
+}
+
+function buildAKM(d) {
+  if (!d) return emptyState('No AKM data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.version || '-'),
+        h('div', { class: 'stat-label' }, 'Version')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.entryCount ?? '-'),
+        h('div', { class: 'stat-label' }, 'Entries')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.sourcesCount ?? '0'),
+        h('div', { class: 'stat-label' }, 'Sources')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('akm')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'AKM Service'),
+        h('div', { class: 'card-subtitle' }, d.summary),
+        h('div', { class: 'card-meta' },
+          `MCP: ${d.mcpAvailable ? 'Yes' : 'No'} | CLI: ${d.cliAvailable ? 'Yes' : 'No'} | FTS: ${d.ftsAvailable ? 'Yes' : 'No'}`
+        )
+      )
+    )
+  );
+}
+
+function buildAgents(d) {
+  if (!d?.items) return emptyState('No agents');
+  const frag = document.createDocumentFragment();
+  d.items.forEach(a => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('agent')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, a.name),
+        h('div', { class: 'card-subtitle' }, `${a.mode} | ${a.exists ? 'present' : 'missing'}`),
+        h('div', { class: 'card-meta' }, badge(a.status), ` | ${ago(a.updatedAt)}`)
+      )
+    ));
+  });
+  return frag;
+}
+
+function buildCommands(d) {
+  if (!d?.items) return emptyState('No commands');
+  const frag = document.createDocumentFragment();
+  d.items.forEach(c => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('command')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, c.name),
+        h('div', { class: 'card-subtitle' }, `Agent: ${c.agent} | ${c.exists ? 'ready' : 'missing'}`),
+        h('div', { class: 'card-meta' }, badge(c.status), ` | ${ago(c.updatedAt)}`)
+      )
+    ));
+  });
+  return frag;
+}
+
+function buildSkills(d) {
+  if (!d?.items) return emptyState('No skills');
+  const frag = document.createDocumentFragment();
+  d.items.forEach(s => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('skill')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, s.name),
+        h('div', { class: 'card-subtitle' }, s.exists ? 'Present' : 'Missing'),
+        h('div', { class: 'card-meta' }, badge(s.status), ` | ${ago(s.updatedAt)}`)
+      )
+    ));
+  });
+  return frag;
+}
+
+function buildTokens(d) {
+  if (!d) return emptyState('No token data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.pluginVersion || 'N/A'),
+        h('div', { class: 'stat-label' }, 'Plugin')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.totalSessions || '0'),
+        h('div', { class: 'stat-label' }, 'Sessions')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `$${(d.totalCostUsd || 0).toFixed(2)}`),
+        h('div', { class: 'stat-label' }, 'Cost')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Status'),
+        h('div', { class: 'card-subtitle' }, d.summary)
+      )
+    )
+  );
+}
+
+function buildContext(d) {
+  if (!d) return emptyState('No context data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.compactionsCount || '0'),
+        h('div', { class: 'stat-label' }, 'Compactions')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${(d.avgCompressionRatio || 0).toFixed(1)}x`),
+        h('div', { class: 'stat-label' }, 'Avg Ratio')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${(d.cacheHitRate || 0).toFixed(0)}%`),
+        h('div', { class: 'stat-label' }, 'Cache Hit')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Context Metrics'),
+        h('div', { class: 'card-subtitle' }, d.summary)
+      )
+    )
+  );
+}
+
+function buildPermissions(d) {
+  if (!d) return emptyState('No permission data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.allowed || '0'),
+        h('div', { class: 'stat-label' }, 'Allowed')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.asked || '0'),
+        h('div', { class: 'stat-label' }, 'Asked')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.denied || '0'),
+        h('div', { class: 'stat-label' }, 'Denied')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Permission Stats'),
+        h('div', { class: 'card-subtitle' }, d.summary)
+      )
+    )
+  );
+}
+
+function buildRecovery(d) {
+  if (!d) return emptyState('No recovery data');
+  const frag = document.createDocumentFragment();
+  frag.appendChild(h('div', { class: 'stats' },
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.escalation ? 'YES' : 'NO'),
+      h('div', { class: 'stat-label' }, 'Escalation')
+    ),
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, Object.keys(d.components || {}).length.toString()),
+      h('div', { class: 'stat-label' }, 'Components')
+    )
+  ));
+  Object.entries(d.components || {}).forEach(([name, comp]) => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('recovery')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, name),
+        h('div', { class: 'card-subtitle' }, `State: ${comp.state}`),
+        h('div', { class: 'card-meta' },
+          `Failures: ${comp.consecutiveFailures} | Attempts: ${comp.recoveryAttempts}`,
+          comp.lastError ? ` | Error: ${comp.lastError}` : ''
+        )
+      )
+    ));
+  });
+  return frag;
+}
+
+function buildUpdates(d) {
+  if (!d) return emptyState('No update data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.currentVersion || '-'),
+        h('div', { class: 'stat-label' }, 'Current')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.latestVersion || '-'),
+        h('div', { class: 'stat-label' }, 'Latest')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.updateAvailable ? 'YES' : 'No'),
+        h('div', { class: 'stat-label' }, 'Update Avail')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Canary'),
+        h('div', { class: 'card-subtitle' },
+          d.canaryActive ? `Active: v${d.canaryVersion}` : 'No canary active'
+        )
+      )
+    ),
+    d.blockedVersions?.length > 0 ? h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Blocked Versions'),
+        h('div', { class: 'card-subtitle' }, d.blockedVersions.join(', '))
+      )
+    ) : null
+  );
+}
+
+function buildE2E(d) {
+  if (!d) return emptyState('No E2E data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${d.agentsActual}/${d.agentsExpected}`),
+        h('div', { class: 'stat-label' }, 'Agents')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${d.commandsActual}/${d.commandsExpected}`),
+        h('div', { class: 'stat-label' }, 'Commands')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${d.skillsActual}/${d.skillsExpected}`),
+        h('div', { class: 'stat-label' }, 'Skills')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, `${d.mcpServersActual}/${d.mcpServersExpected}`),
+        h('div', { class: 'stat-label' }, 'MCP')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Contract'),
+        h('div', { class: 'card-subtitle' }, d.summary),
+        h('div', { class: 'card-meta' }, `Contract v${d.contractVersion} | Last run: ${ago(d.lastRun)}`)
+      )
+    )
+  );
+}
+
+function buildDR(d) {
+  if (!d) return emptyState('No DR data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.manifestExists ? 'Yes' : 'No'),
+        h('div', { class: 'stat-label' }, 'Manifest')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.versionLockVersion || '-'),
+        h('div', { class: 'stat-label' }, 'Version Lock')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.cleanServerDrill || 'NOT_RUN'),
+        h('div', { class: 'stat-label' }, 'Clean Server Drill')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'DR Summary'),
+        h('div', { class: 'card-subtitle' }, d.summary),
+        h('div', { class: 'card-meta' },
+          `RTO: ${d.rtoMinutes ?? '?'}m | RPO: ${d.rpoMinutes ?? '?'}m | Matrix validated: ${d.matrixValidated ? 'Yes' : 'No'}`
+        )
+      )
+    )
+  );
+}
+
+function buildLearning(d) {
+  if (!d) return emptyState('No learning data');
+  return h('div', null,
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.agentRunsToday || '0'),
+        h('div', { class: 'stat-label' }, 'Runs Today')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.lessonsSaved || '0'),
+        h('div', { class: 'stat-label' }, 'Lessons')
+      ),
+      h('div', { class: 'stat' },
+        h('div', { class: 'stat-value' }, d.agentMode || '-'),
+        h('div', { class: 'stat-label' }, 'Agent Mode')
+      )
+    ),
+    h('div', { class: 'card' },
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, 'Learning Status'),
+        h('div', { class: 'card-subtitle' }, d.summary)
+      )
+    )
+  );
+}
+
+function buildSystem(d) {
+  if (!d) return emptyState('No system data');
+  const frag = document.createDocumentFragment();
+  frag.appendChild(h('div', { class: 'stats' },
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.nodeVersion || '-'),
+      h('div', { class: 'stat-label' }, 'Node')
+    ),
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.bunVersion || '-'),
+      h('div', { class: 'stat-label' }, 'Bun')
+    ),
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.opencodeVersion || '-'),
+      h('div', { class: 'stat-label' }, 'OpenCode')
+    ),
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.diskUsagePercent != null ? `${d.diskUsagePercent}%` : '-'),
+      h('div', { class: 'stat-label' }, 'Disk')
+    ),
+    h('div', { class: 'stat' },
+      h('div', { class: 'stat-value' }, d.memoryUsagePercent != null ? `${d.memoryUsagePercent}%` : '-'),
+      h('div', { class: 'stat-label' }, 'Memory')
+    )
+  ));
+  (d.services || []).forEach(s => {
+    frag.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'card-icon' }, icon('system')),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-title' }, s.name),
+        h('div', { class: 'card-subtitle' },
+          `Status: ${s.status}${s.pid ? ` | PID: ${s.pid}` : ''}`
+        )
+      )
+    ));
+  });
+  return frag;
+}
+
+/* ── Render ── */
+function createSection(s) {
+  const header = h('div', { class: 'section-header', onclick: () => toggleSection(s.id) },
+    h('h2', null, icon(s.icon), s.title),
+    h('span', { class: 'chevron' }, '\u25BC')
+  );
+  const body = h('div', { class: 'section-body', id: `body-${s.id}` }, loadingState());
+  const section = h('div', { class: 'section', id: `section-${s.id}` }, header, body);
+  return section;
+}
+
+function toggleSection(id) {
+  const body = document.getElementById(`body-${id}`);
+  const section = document.getElementById(`section-${id}`);
+  if (!body || !section) return;
+  const header = section.querySelector('.section-header');
+  const hidden = body.classList.toggle('hidden');
+  header?.classList.toggle('collapsed', hidden);
+}
+
+async function renderSection(s) {
+  const body = document.getElementById(`body-${s.id}`);
+  if (!body) return;
+  body.innerHTML = '';
+  body.appendChild(loadingState());
+
+  const res = await apiFetch(s.id);
+  body.innerHTML = '';
+  if (res.ok && res.data) {
+    body.appendChild(s.build(res.data));
+  } else {
+    body.appendChild(emptyState(res.error || 'Failed to load'));
+  }
+}
+
+async function refreshAll() {
+  document.getElementById('last-refresh').textContent = `Refreshing...`;
+
+  // Fetch overview first for badge
+  const overviewRes = await apiFetch('overview');
+  if (overviewRes.ok && overviewRes.data) {
+    const badge = document.getElementById('overall-badge');
+    badge.className = `status-badge ${overviewRes.data.status || 'unknown'}`;
+    badge.textContent = (overviewRes.data.status || 'unknown').replace('_', ' ');
+  }
+
+  // Render all sections
+  for (const s of sections) {
+    await renderSection(s);
+  }
+
+  document.getElementById('last-refresh').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+}
+
+/* ── Init ── */
+function init() {
+  const container = document.getElementById('sections');
+  sections.forEach(s => container.appendChild(createSection(s)));
+  refreshAll();
+  refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
