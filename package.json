@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Controlled AKM v0.8.1 adapter — OpenCode MCP tools + local HTTP API",
+  "description": "Controlled AKM v0.8.1 adapter \u2014 OpenCode MCP tools + local HTTP API",
   "scripts": {
     "build": "tsc",
     "start": "node dist/mcp-server.js",
     "start:http": "node dist/http-server.js",
     "dev:mcp": "tsx src/mcp-server.ts",
     "dev:http": "tsx src/http-server.ts",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=test --forceExit",
     "test:injection": "bash tests/run-injection-tests.sh",
     "lint": "tsc --noEmit",
     "lint:ci": "tsc --noEmit --project tsconfig.ci.json",
     "validate:docs": "tsx scripts/validate-docs.ts",
-    "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=mcp-contract --forceExit"
+    "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit"
   },
   "dependencies": {
     "tsx": "^4.22.4"
