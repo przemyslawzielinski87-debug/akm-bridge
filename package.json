@@ -12,7 +12,9 @@
     "dev:http": "tsx src/http-server.ts",
     "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
     "test:injection": "bash tests/run-injection-tests.sh",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "validate:docs": "tsx scripts/validate-docs.ts",
+    "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=mcp-contract --forceExit"
   },
   "dependencies": {
     "tsx": "^4.22.4"
