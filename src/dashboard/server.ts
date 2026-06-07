@@ -12,7 +12,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { collectDashboardData } from '../scripts/opencode-dashboard-data.js'
+import { collectDashboardData } from '../../scripts/opencode-dashboard-data.js'
 import type { DashboardData, DashboardConfig } from './dashboard-types.js'
 
 const __filename = fileURLToPath(import.meta.url)
