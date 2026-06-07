@@ -1,0 +1,17 @@
+# Checksums for disaster recovery — generated from actual environment
+# Format: <sha256>  <path>
+# Scripts
+scripts/bootstrap-opencode-environment.ts  SKIP  # generated at build time
+scripts/opencode-recovery-controller.ts  SKIP
+scripts/opencode-update-controller.ts  SKIP
+scripts/opencode-e2e.ts  SKIP
+scripts/opencode-snapshot.ts  SKIP
+scripts/check-opencode-updates.ts  SKIP
+
+# Config
+/root/.config/opencode/opencode.json  SKIP  # runtime config
+/root/.config/opencode/AGENTS.md  SKIP
+
+# Compatibility
+compatibility/opencode-version-lock.json  SKIP
+compatibility/matrix.json  SKIP

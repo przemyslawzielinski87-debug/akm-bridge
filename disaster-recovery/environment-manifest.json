@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "platform": {
+    "os": "Debian GNU/Linux 13 (trixie)",
+    "arch": "x86_64",
+    "user": "root",
+    "minDiskGB": 10,
+    "minMemoryGB": 4
+  },
+  "runtime": {
+    "opencode": {
+      "version": "1.16.0",
+      "binary": "/root/.opencode/bin/opencode",
+      "installMethod": "binary"
+    },
+    "bun": {
+      "version": "1.3.14",
+      "binary": "/root/.bun/bin/bun",
+      "installMethod": "curl"
+    },
+    "node": {
+      "version": "v22.22.2",
+      "binary": "node",
+      "installMethod": "nvm"
+    },
+    "akm": {
+      "version": "0.8.1",
+      "binary": "/root/.bun/bin/akm",
+      "installMethod": "bun"
+    }
+  },
+  "repository": {
+    "url": "https://github.com/przemyslawzielinski87-debug/akm-bridge",
+    "branch": "main",
+    "currentCommit": "80366d9"
+  },
+  "agents": {
+    "count": 13,
+    "directory": "/root/.config/opencode/agents",
+    "files": []
+  },
+  "commands": {
+    "count": 19,
+    "directory": "/root/.config/opencode/commands",
+    "files": []
+  },
+  "skills": {
+    "count": 21,
+    "directory": "/root/.config/opencode/skills",
+    "directories": []
+  },
+  "mcpServers": {
+    "count": 7,
+    "transport": "stdio",
+    "managedBy": "opencode-mcp-control"
+  },
+  "plugins": {
+    "count": 8
+  },
+  "systemdUnits": [
+    {
+      "name": "opencode.service",
+      "type": "service",
+      "enabled": true
+    },
+    {
+      "name": "opencode-web.service",
+      "type": "service",
+      "enabled": true
+    },
+    {
+      "name": "opencode-mcp-control.service",
+      "type": "service",
+      "enabled": true
+    },
+    {
+      "name": "akm-bridge.service",
+      "type": "service",
+      "enabled": true
+    },
+    {
+      "name": "caddy-custom.service",
+      "type": "service",
+      "enabled": true
+    },
+    {
+      "name": "opencode-recovery-check.service",
+      "type": "service",
+      "enabled": false
+    },
+    {
+      "name": "opencode-recovery-check.timer",
+      "type": "timer",
+      "enabled": true
+    },
+    {
+      "name": "opencode-update-check.service",
+      "type": "service",
+      "enabled": false
+    },
+    {
+      "name": "opencode-update-check.timer",
+      "type": "timer",
+      "enabled": true
+    }
+  ],
+  "configFiles": [
+    "/root/.config/opencode/opencode.json",
+    "/root/.config/opencode/AGENTS.md"
+  ],
+  "secretPlaceholders": [
+    {
+      "name": "AKM_WRITE_ENABLED",
+      "required": false,
+      "description": "Enable AKM write API"
+    },
+    {
+      "name": "OPENCODE_SESSION_KEY",
+      "required": false,
+      "description": "Session encryption key"
+    }
+  ],
+  "validationChecks": [
+    "opencode_version_match",
+    "config_syntax_valid",
+    "agents_discovered",
+    "commands_discovered",
+    "skills_discovered",
+    "mcp_initialize",
+    "akm_health",
+    "permissions_deny",
+    "systemd_verify"
+  ]
+}
