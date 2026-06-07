@@ -13,6 +13,7 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
     "test:injection": "bash tests/run-injection-tests.sh",
     "lint": "tsc --noEmit",
+    "lint:ci": "tsc --noEmit --project tsconfig.ci.json",
     "validate:docs": "tsx scripts/validate-docs.ts",
     "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=mcp-contract --forceExit"
   },
