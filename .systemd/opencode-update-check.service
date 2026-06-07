@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenCode Update Check (read-only)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/.bun/bin/bun run /root/projekt/akm-bridge/scripts/check-opencode-updates.ts --check --json
+WorkingDirectory=/root/projekt/akm-bridge
+User=root
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=120

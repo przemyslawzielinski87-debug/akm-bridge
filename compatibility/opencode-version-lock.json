@@ -1,0 +1,40 @@
+{
+  "opencode": {
+    "version": "1.16.0",
+    "installMethod": "binary",
+    "binary": "/root/.opencode/bin/opencode"
+  },
+  "runtime": {
+    "bun": "1.3.14",
+    "node": "v22.22.2"
+  },
+  "akm": {
+    "version": "0.8.1"
+  },
+  "akmBridge": {
+    "commit": "332e462",
+    "version": "0.1.0"
+  },
+  "plugins": {
+    "dcp": "3.1.12",
+    "pty": "0.3.4",
+    "vibeguard": "0.1.0",
+    "review-helper": "0.3.1",
+    "websearch-cited": "1.2.0",
+    "tokenscope": "1.6.5",
+    "snip": "1.6.1",
+    "otel": "1.1.0"
+  },
+  "mcpServers": {
+    "context7": "enabled",
+    "filesystem-project": "enabled",
+    "github": "enabled",
+    "lean-ctx": "enabled",
+    "playwright": "enabled",
+    "sequential-thinking": "enabled",
+    "akm-bridge": "enabled"
+  },
+  "schemaVersion": 1,
+  "validatedAt": "2026-06-07T12:00:00Z",
+  "e2eCommit": "332e462"
+}

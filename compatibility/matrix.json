@@ -1,0 +1,26 @@
+{
+  "validatedCombinations": [
+    {
+      "opencode": "1.16.0",
+      "bun": "1.3.14",
+      "node": "v22.22.2",
+      "akm": "0.8.1",
+      "akmBridge": "0.1.0",
+      "mcpSdk": "unknown",
+      "plugins": {
+        "dcp": "3.1.12",
+        "pty": "0.3.4",
+        "vibeguard": "0.1.0",
+        "review-helper": "0.3.1",
+        "websearch-cited": "1.2.0",
+        "tokenscope": "1.6.5",
+        "snip": "1.6.1",
+        "otel": "1.1.0"
+      },
+      "status": "validated",
+      "validatedAt": "2026-06-07T12:00:00Z",
+      "e2eCommit": "332e462"
+    }
+  ],
+  "blockedVersions": []
+}
