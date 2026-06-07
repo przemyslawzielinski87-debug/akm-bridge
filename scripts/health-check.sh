@@ -32,11 +32,13 @@ disk_log_warn() {
 
 http_success() {
   local url="${1:-http://127.0.0.1:4097/health}"
+  local code="000"
   if command -v curl &>/dev/null; then
-    curl -sf -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
+    code=$(curl -sf -o /dev/null -w "%{http_code}" "$url" 2>/dev/null) || code="000"
   else
-    echo "-1"
+    code="-1"
   fi
+  echo "$code"
 }
 
 main() {
