@@ -1,0 +1,10 @@
+# Gitleaks configuration — allowlist test fixture data
+# These are fake/test values used to verify secret detection, NOT real secrets.
+
+[allowlist]
+  description = "Allowlist test fixtures"
+  paths = [
+    '''tests/.*\.test\.ts$''',
+    '''tests/e2e/fixtures/.*$''',
+    '''docs/examples/.*$''',
+  ]
