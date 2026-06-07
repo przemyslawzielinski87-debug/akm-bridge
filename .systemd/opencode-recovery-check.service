@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenCode Recovery Check — evaluate and act on component health
+Documentation=https://github.com/przemyslawzielinski87-debug/akm-bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/projekt/akm-bridge
+ExecStart=/root/.local/bin/bun run scripts/opencode-recovery-controller.ts --check
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+RestrictRealtime=true
+LockPersonality=true
+Environment=PATH=/root/.local/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+Environment=HOME=/root
+
+[Install]
+WantedBy=multi-user.target

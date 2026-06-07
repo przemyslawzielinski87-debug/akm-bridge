@@ -12,6 +12,15 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const PROJECT_ROOT = resolve(__dirname, '..')
 
+const STATE_FILE = '/tmp/opencode-recovery-state.json'
+
+interface RecoverySection {
+  components_in_cooldown: number
+  escalations: boolean
+  total_recovery_attempts: number
+  components: Record<string, { state: string; consecutive_failures: number; recovery_attempts: number }>
+}
+
 interface Report {
   timestamp: string
   system_status: string
@@ -29,6 +38,7 @@ interface Report {
   agents_total: number
   commands_total: number
   skills_total: number
+  recovery: RecoverySection
   warnings: string[]
   errors: string[]
 }
@@ -75,6 +85,23 @@ function countFiles(dir: string): number {
   } catch { return 0 }
 }
 
+function readRecoveryState(): RecoverySection {
+  try {
+    if (!existsSync(STATE_FILE)) return { components_in_cooldown: 0, escalations: false, total_recovery_attempts: 0, components: {} }
+    const raw = readFileSync(STATE_FILE, 'utf-8')
+    const parsed = JSON.parse(raw)
+    const components: Record<string, any> = {}
+    let cooldown = 0
+    let totalAttempts = 0
+    for (const [name, comp] of Object.entries(parsed.components || {}) as [string, any][]) {
+      components[name] = { state: comp.state, consecutive_failures: comp.consecutive_failures, recovery_attempts: comp.recovery_attempts }
+      if (comp.cooldown_until && Date.now() < comp.cooldown_until) cooldown++
+      totalAttempts += comp.recovery_attempts || 0
+    }
+    return { components_in_cooldown: cooldown, escalations: parsed.escalation, total_recovery_attempts: totalAttempts, components }
+  } catch { return { components_in_cooldown: 0, escalations: false, total_recovery_attempts: 0, components: {} } }
+}
+
 async function main() {
   const report: Report = {
     timestamp: new Date().toISOString(),
@@ -93,6 +120,7 @@ async function main() {
     agents_total: countFiles('/root/.config/opencode/agents'),
     commands_total: countFiles('/root/.config/opencode/commands'),
     skills_total: countFiles('/root/.config/opencode/skills'),
+    recovery: readRecoveryState(),
     warnings: [],
     errors: [],
   }
