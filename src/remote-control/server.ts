@@ -33,6 +33,9 @@ import {
   checkIdempotency,
   registerIdempotencyKey,
 } from './task-validator.js'
+import { NotificationStore } from '../notifications/notification-store.js'
+import { buildManagerFromEnv } from '../notifications/notification-manager.js'
+import { buildNotificationRoutes } from '../notifications/notification-api.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -60,6 +63,11 @@ const worker = new TaskWorker(store, adapter, approvalManager, sse, {
   pollIntervalMs: parseInt(process.env.WORKER_POLL_MS ?? '2000'),
 })
 worker.start()
+
+const notificationStore = new NotificationStore(
+  process.env.NOTIFICATION_DB_PATH ?? resolve(__dirname, '..', '..', 'data', 'notifications.db')
+)
+const notificationManager = buildManagerFromEnv(notificationStore)
 
 /* ── Session cookie auth ── */
 
@@ -227,6 +235,10 @@ function auditLog(
   })
 }
 
+function okResponse(data: unknown, req?: Request): Response {
+  return json({ ok: true, ...((data as object) ?? {}) }, 200, req)
+}
+
 function stale(data: unknown, generatedAt: string, ttlSec: number): unknown {
   const age = (Date.now() - new Date(generatedAt).getTime()) / 1000
   return { ...data as object, stale: age > ttlSec * 2 }
@@ -266,6 +278,32 @@ function validateCsrf(req: Request): { valid: boolean; error?: string } {
 }
 
 /* ── Routes ── */
+
+/* ── Notification route handlers ── */
+
+const notifHandlers = buildNotificationRoutes({
+  manager: notificationManager,
+  requireAuth: (req) => requireAuth(req),
+  csrfCheck: (req) => csrfCheck(req),
+  recordAudit: (action, target, outcome) =>
+    store.audit({ action, session_id: undefined, task_id: target, agent: undefined, detail: outcome, ip_address: undefined }),
+  isAllowedOrigin: (origin) => isAllowedOrigin(origin ?? undefined),
+  securityHeaders: () => securityHeaders(),
+  corsHeaders: (origin) => corsHeaders(origin ?? null),
+  errorResponse: (msg, status, req) => errorResponse(msg, status, req),
+  okResponse: (data, req) => okResponse(data, req),
+  rateLimit: (_ip, _key, _limit, _window) => true,
+  logRequest: (method, path, status, ip) => logRequest(method, path, status, ip),
+})
+
+const handleGetNotifications = (req: Request, url: URL, ip: string) => notifHandlers.handleGetNotifications(req, url, ip)
+const handleGetPreferences = (req: Request, ip: string) => notifHandlers.handleGetPreferences(req, ip)
+const handlePutPreferences = (req: Request, ip: string) => notifHandlers.handlePutPreferences(req, ip)
+const handleGetChannels = (req: Request, ip: string) => notifHandlers.handleGetChannels(req, ip)
+const handlePostTest = (req: Request, ip: string) => notifHandlers.handlePostTest(req, ip)
+const handleGetDeliveries = (req: Request, url: URL, ip: string) => notifHandlers.handleGetDeliveries(req, url, ip)
+const handlePostAcknowledge = (req: Request, url: URL, ip: string) => notifHandlers.handlePostAcknowledge(req, url, ip)
+const handleGetStatus = (req: Request, ip: string) => notifHandlers.handleGetStatus(req, ip)
 
 const server = Bun.serve({
   port: PORT,
@@ -977,6 +1015,41 @@ const server = Bun.serve({
       } catch (err: any) {
         return errorResponse(err.message ?? 'Failed to delete schedule', 400, req)
       }
+    }
+
+    // ── Notification Routes ──────────────────────────────────────────────────────
+    // GET    /api/notifications              - list notifications
+    // GET    /api/notifications/preferences  - get preferences
+    // PUT    /api/notifications/preferences  - update preferences
+    // GET    /api/notifications/channels     - channel health
+    // POST   /api/notifications/test         - send test notification
+    // GET    /api/notifications/deliveries   - get delivery history
+    // POST   /api/notifications/:id/acknowledge - acknowledge
+    // GET    /api/notifications/status       - full status
+
+    if (method === 'GET' && path === '/api/notifications') {
+      return handleGetNotifications(req, url, ip)
+    }
+    if (method === 'GET' && path === '/api/notifications/preferences') {
+      return handleGetPreferences(req, ip)
+    }
+    if (method === 'PUT' && path === '/api/notifications/preferences') {
+      return handlePutPreferences(req, ip)
+    }
+    if (method === 'GET' && path === '/api/notifications/channels') {
+      return handleGetChannels(req, ip)
+    }
+    if (method === 'POST' && path === '/api/notifications/test') {
+      return handlePostTest(req, ip)
+    }
+    if (method === 'GET' && path === '/api/notifications/deliveries') {
+      return handleGetDeliveries(req, url, ip)
+    }
+    if (method === 'POST' && path.match(/^\/api\/notifications\/[^/]+\/acknowledge$/)) {
+      return handlePostAcknowledge(req, url, ip)
+    }
+    if (method === 'GET' && path === '/api/notifications/status') {
+      return handleGetStatus(req, ip)
     }
 
     // Fallback
