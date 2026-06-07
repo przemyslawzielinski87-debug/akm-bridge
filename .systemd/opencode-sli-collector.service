@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenCode SLI Collector — collect real-time SLO metrics
+Documentation=https://github.com/przemyslawzielinski87-debug/akm-bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/projekt/akm-bridge
+ExecStart=/root/.bun/bin/bun run src/slo/collector-worker.ts --once
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+RestrictRealtime=true
+LockPersonality=true
+Environment=PATH=/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+Environment=HOME=/root
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
