@@ -223,6 +223,8 @@ function testOpenCodeVersion(): TestResult {
 
 function testContractAgents(): TestResult {
   return measure(() => {
+    if (!fs.existsSync(AGENTS_DIR))
+      return skipped("contract-agents", `AGENTS_DIR not accessible (expected in CI)`);
     const existing = new Set(
       fs.readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md"))
     );
@@ -238,6 +240,8 @@ function testContractAgents(): TestResult {
 
 function testContractCommands(): TestResult {
   return measure(() => {
+    if (!fs.existsSync(COMMANDS_DIR))
+      return skipped("contract-commands", `COMMANDS_DIR not accessible (expected in CI)`);
     const existing = new Set(
       fs.readdirSync(COMMANDS_DIR).filter((f) => f.endsWith(".md"))
     );
@@ -253,6 +257,8 @@ function testContractCommands(): TestResult {
 
 function testContractSkills(): TestResult {
   return measure(() => {
+    if (!fs.existsSync(SKILLS_DIR))
+      return skipped("contract-skills", `SKILLS_DIR not accessible (expected in CI)`);
     const entries = fs.readdirSync(SKILLS_DIR, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory());
     const missing: string[] = [];
@@ -294,6 +300,8 @@ function testContractMCP(): TestResult {
 
 function testPermissionYaml(): TestResult {
   return measure(() => {
+    if (!fs.existsSync(AGENTS_DIR))
+      return skipped("permission-yaml", `AGENTS_DIR not accessible (expected in CI)`);
     const issues: string[] = [];
     const agentFiles = EXPECTED_AGENT_FILES.filter((f) =>
       fs.existsSync(path.join(AGENTS_DIR, f))
@@ -355,6 +363,8 @@ function testObservabilityScripts(): TestResult {
 
 function testConfigSyntax(): TestResult {
   return measure(() => {
+    if (!fs.existsSync(OPENCODE_JSON))
+      return skipped("config-syntax", `opencode.json not accessible (expected in CI)`);
     try {
       const raw = fs.readFileSync(OPENCODE_JSON, "utf-8");
       JSON.parse(raw);
