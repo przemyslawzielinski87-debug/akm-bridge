@@ -23,8 +23,8 @@ function log(msg: string) {
 async function dispatchOnce(manager: ReturnType<typeof buildManagerFromEnv>) {
   try {
     const dispatched = await manager.dispatchQueued();
-    if (dispatched > 0) {
-      log(`dispatched ${dispatched} notification(s)`);
+    if (dispatched.sent > 0) {
+      log(`dispatched ${dispatched.sent} notification(s)`);
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -36,7 +36,7 @@ async function main() {
   log("starting notification worker");
 
   const dbPath = process.env.NOTIFICATION_DB_PATH
-    ?? resolve(import.meta.dir, "..", "..", "data", "notifications.db");
+    ?? resolve(process.cwd(), "data", "notifications.db");
 
   let store: NotificationStore;
   try {

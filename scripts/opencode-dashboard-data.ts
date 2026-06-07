@@ -132,7 +132,7 @@ function redactSecrets(obj: unknown): unknown {
 
 /* ── Collectors ── */
 
-function collectAgents(): { status: StatusSection; items: AgentStatus[] } {
+function collectAgents(): StatusSection & { items: AgentStatus[] } {
   const contract = safeReadJson(E2E_CONTRACT) as any
   const contractAgents: any[] = contract?.agents ?? []
   const items: AgentStatus[] = []
@@ -176,20 +176,18 @@ function collectAgents(): { status: StatusSection; items: AgentStatus[] } {
     }
   }
 
-  const status = mergeStatus(...items.map(i => i.status))
+  const st = mergeStatus(...items.map(i => i.status))
   return {
-    status: {
-      status,
-      summary: summarize(status, items.length, 'agents'),
-      updatedAt: now(),
-      source: 'e2e-contract + filesystem',
-      details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
-    },
+    status: st,
+    summary: summarize(st, items.length, 'agents'),
+    updatedAt: now(),
+    source: 'e2e-contract + filesystem',
+    details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
     items,
   }
 }
 
-function collectCommands(): { status: StatusSection; items: CommandStatus[] } {
+function collectCommands(): StatusSection & { items: CommandStatus[] } {
   const contract = safeReadJson(E2E_CONTRACT) as any
   const contractCmds: any[] = contract?.commands ?? []
   const items: CommandStatus[] = []
@@ -212,20 +210,18 @@ function collectCommands(): { status: StatusSection; items: CommandStatus[] } {
     })
   }
 
-  const status = mergeStatus(...items.map(i => i.status))
+  const st = mergeStatus(...items.map(i => i.status))
   return {
-    status: {
-      status,
-      summary: summarize(status, items.length, 'commands'),
-      updatedAt: now(),
-      source: 'e2e-contract + filesystem',
-      details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
-    },
+    status: st,
+    summary: summarize(st, items.length, 'commands'),
+    updatedAt: now(),
+    source: 'e2e-contract + filesystem',
+    details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
     items,
   }
 }
 
-function collectSkills(): { status: StatusSection; items: SkillStatus[] } {
+function collectSkills(): StatusSection & { items: SkillStatus[] } {
   const contract = safeReadJson(E2E_CONTRACT) as any
   const contractSkills: any[] = contract?.skills ?? []
   const items: SkillStatus[] = []
@@ -274,15 +270,13 @@ function collectSkills(): { status: StatusSection; items: SkillStatus[] } {
     }
   }
 
-  const status = mergeStatus(...items.map(i => i.status))
+  const st = mergeStatus(...items.map(i => i.status))
   return {
-    status: {
-      status,
-      summary: summarize(status, items.length, 'skills'),
-      updatedAt: now(),
-      source: 'e2e-contract + filesystem',
-      details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
-    },
+    status: st,
+    summary: summarize(st, items.length, 'skills'),
+    updatedAt: now(),
+    source: 'e2e-contract + filesystem',
+    details: { total: items.length, healthy: items.filter(i => i.status === 'healthy').length },
     items,
   }
 }
@@ -329,15 +323,13 @@ function collectMCP(): StatusSection & { servers: MCPServerStatus[] } {
   }
 
   const statuses = servers.map(s => s.status)
-  const status = mergeStatus(...statuses)
+  const mcpSt = mergeStatus(...statuses)
   return {
-    status: {
-      status,
-      summary: `${servers.filter(s => s.enabled).length}/${servers.length} MCP servers enabled`,
-      updatedAt: now(),
-      source: 'opencode.json',
-      details: { total: servers.length, enabled: servers.filter(s => s.enabled).length },
-    },
+    status: mcpSt,
+    summary: `${servers.filter(s => s.enabled).length}/${servers.length} MCP servers enabled`,
+    updatedAt: now(),
+    source: 'opencode.json',
+    details: { total: servers.length, enabled: servers.filter(s => s.enabled).length },
     servers,
   }
 }
@@ -773,10 +765,10 @@ export function collectDashboardData(): DashboardData {
   const system = collectSystem()
 
   const componentStatuses = [
-    agents.status.status,
-    commands.status.status,
-    skills.status.status,
-    mcp.status.status,
+    agents.status,
+    commands.status,
+    skills.status,
+    mcp.status,
     akm.status,
     recovery.status,
     system.status,
@@ -790,10 +782,10 @@ export function collectDashboardData(): DashboardData {
     updatedAt: now(),
     source: 'aggregate',
     details: {
-      agents: agents.status.status,
-      commands: commands.status.status,
-      skills: skills.status.status,
-      mcp: mcp.status.status,
+      agents: agents.status,
+      commands: commands.status,
+      skills: skills.status,
+      mcp: mcp.status,
       akm: akm.status,
       recovery: recovery.status,
       system: system.status,

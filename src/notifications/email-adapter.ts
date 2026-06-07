@@ -72,6 +72,7 @@ export class EmailAdapter implements NotificationAdapter {
 
     try {
       const { default: nodemailer } = await import("nodemailer").catch(() => ({ default: null as unknown }));
+      const nm = nodemailer as any;
       if (!nodemailer) {
         return {
           ok: false,
@@ -79,7 +80,7 @@ export class EmailAdapter implements NotificationAdapter {
           error_message: "nodemailer not installed; install via: bun add nodemailer",
         };
       }
-      const transport = nodemailer.createTransport({
+      const transport = nm.createTransport({
         host: this.config!.smtp_host,
         port: this.config!.smtp_port,
         secure: this.config!.tls === "tls",

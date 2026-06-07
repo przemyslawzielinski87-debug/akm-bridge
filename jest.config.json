@@ -1,6 +1,6 @@
 {
   "transform": {
-    "^.+\\.tsx?$": ["ts-jest", { "useESM": true, "diagnostics": false }]
+    "^.+\\.tsx?$": ["ts-jest", { "useESM": true, "diagnostics": true }]
   },
   "extensionsToTreatAsEsm": [".ts"],
   "moduleNameMapper": {

@@ -526,7 +526,7 @@ export class SchedulerEngineImpl
     return maxAttempt + 1;
   }
 
-  private getDueSchedules(): Schedule[] {
+  getDueSchedules(): Schedule[] {
     return this.store.listEnabledDueSchedules(new Date().toISOString());
   }
 

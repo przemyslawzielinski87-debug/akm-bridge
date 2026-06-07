@@ -377,7 +377,7 @@ function checkAllComponents(): ComponentHealthSummary[] {
     return {
       component: c.name,
       alive: health.alive,
-      failure_class: health.failure_class,
+failure_class: health.failure_class as number,
       error: health.error,
       detail: health.detail,
     }
@@ -483,7 +483,15 @@ function executeRecovery(component: string, action: RecoveryAction): boolean {
   if (action.action_type === 'fallback') {
     const h = COMPONENTS.find(c => c.name === component)
     if (!h) return false
-    return executeFallback(component, h.healthCommand())
+    const healthResult = h.healthCommand();
+    const summary: ComponentHealthSummary = {
+      component: h.name,
+      alive: healthResult.alive,
+      failure_class: healthResult.failure_class as number,
+      error: healthResult.error,
+      detail: healthResult.detail,
+    };
+    return executeFallback(component, summary)
   }
   if (action.action_type === 'restart_systemd') {
     const compInfo = COMPONENTS.find(c => c.name === component)
@@ -620,7 +628,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     }
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed: [], action_executed: [], final_state: comp.state,
       functional_test: [], cooldown: false, escalation: false, messages: ['healthy'],
     }
@@ -630,7 +638,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
   comp.consecutive_failures++
   comp.consecutive_successes = 0
   comp.last_failure_time = Date.now()
-  comp.failure_class = health.failure_class
+  comp.failure_class = health.failure_class as FailureClass | null
   comp.last_error = health.error
 
   // Class 0 — transient, no state transition
@@ -665,7 +673,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     messages.push(`${name}: ${comp.consecutive_failures} consecutive failures (warning threshold: ${WARNING_AFTER})`)
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed: [], action_executed: [], final_state: comp.state,
       functional_test: [], cooldown: false, escalation: false,
       messages: [`below recovery threshold (${comp.consecutive_failures}/${RECOVERY_AFTER})`],
@@ -677,7 +685,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     messages.push(`${name}: FAILURE_SUSPECTED at ${comp.consecutive_failures} consecutive failures`)
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed: [], action_executed: [], final_state: comp.state,
       functional_test: [], cooldown: false, escalation: false,
       messages: ['recovery threshold not yet reached — monitoring'],
@@ -696,7 +704,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     cooldown = true
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed: [], action_executed: [], final_state: 'COOLDOWN',
       functional_test: [], cooldown: true, escalation: false,
       messages: [`rate limited: ${rateLimit.reason}`],
@@ -716,7 +724,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     escalation = true
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed, action_executed, final_state: 'ESCALATION_REQUIRED',
       functional_test: [], cooldown: false, escalation: true,
       messages: ['actions require human approval — escalating'],
@@ -728,7 +736,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
     transitionState(comp, 'RECOVERY_FAILED', 'no recovery actions available', name)
     writeStateAtomic(state)
     return {
-      component: name, initial_state, failure_class: health.failure_class,
+      component: name, initial_state, failure_class: health.failure_class as FailureClass | null,
       action_proposed, action_executed, final_state: 'RECOVERY_FAILED',
       functional_test: [], cooldown: false, escalation: false,
       messages: ['no recovery actions available'],
@@ -784,7 +792,7 @@ function evaluateComponent(name: string, health: ComponentHealthSummary, dryRun:
   return {
     component: name,
     initial_state,
-    failure_class: health.failure_class,
+    failure_class: health.failure_class as FailureClass | null,
     action_proposed,
     action_executed,
     final_state: comp.state,
@@ -837,7 +845,7 @@ function generateReport(dryRun: boolean, targetComponent?: string): RecoveryRepo
     }
   }
 
-  report.updated_at = new Date().toISOString()
+  report.timestamp = new Date().toISOString()
   return report
 }
 
@@ -932,7 +940,7 @@ function main(): void {
   }
 
   const report = generateReport(dryRun, targetComponent)
-  report.updated_at = new Date().toISOString()
+  report.timestamp = new Date().toISOString()
   console.log(JSON.stringify(report, null, 2))
 
   if (report.escalation) process.exit(2)

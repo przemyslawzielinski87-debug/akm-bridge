@@ -275,7 +275,7 @@ interface RawProposalHit {
 }
 
 export async function listProposals(status?: string): Promise<AdapterResult<AkmProposal[]>> {
-  return withTiming('proposals', async () => {
+  return withTiming<AkmProposal[]>('proposals', async () => {
     const t0 = Date.now()
     try {
       const args = ['proposal', 'list']
@@ -304,7 +304,7 @@ export async function listProposals(status?: string): Promise<AdapterResult<AkmP
 /* ── Proposal show ── */
 
 export async function showProposal(id: string): Promise<AdapterResult<AkmProposalDiff>> {
-  return withTiming('proposal', async () => {
+  return withTiming<AkmProposalDiff>('proposal', async (): Promise<AdapterResult<AkmProposalDiff>> => {
     const t0 = Date.now()
     if (!id || id.length === 0) {
       return { ok: false, data: null, meta: makeMeta('proposal', 0), error: { code: 'INVALID_INPUT', message: 'Proposal ID is required' } }
@@ -356,7 +356,7 @@ export async function acceptProposal(id: string): Promise<AdapterResult<{ messag
   if (!id || id.length === 0) {
     return { ok: false, data: null, meta: makeMeta('proposal_accept', 0), error: { code: 'INVALID_INPUT', message: 'Proposal ID is required' } }
   }
-  if (!acquireWriteLock('proposal_accept')) return writeLockBusyError()
+  if (!acquireWriteLock('proposal_accept')) return writeLockBusyError() as AdapterResult<{ message: string }>
   const t0 = Date.now()
   try {
     await runAkm(['proposal', 'accept', id], writeTimeout())
@@ -376,7 +376,7 @@ export async function rejectProposal(id: string, reason?: string): Promise<Adapt
   if (!id || id.length === 0) {
     return { ok: false, data: null, meta: makeMeta('proposal_reject', 0), error: { code: 'INVALID_INPUT', message: 'Proposal ID is required' } }
   }
-  if (!acquireWriteLock('proposal_reject')) return writeLockBusyError()
+  if (!acquireWriteLock('proposal_reject')) return writeLockBusyError() as AdapterResult<{ message: string }>
   const t0 = Date.now()
   try {
     const args = ['proposal', 'reject', id]
@@ -405,7 +405,7 @@ export async function remember(content: string, name?: string, tag?: string): Pr
       error: { code: 'SECRET_DETECTED', message: `Potential secret detected: ${secrets[0].category} at ${secrets[0].safe_location}. Content rejected.` },
     }
   }
-  if (!acquireWriteLock('remember')) return writeLockBusyError()
+  if (!acquireWriteLock('remember')) return writeLockBusyError() as AdapterResult<{ message: string }>
   const t0 = Date.now()
   try {
     const args = ['remember', content]
@@ -438,7 +438,7 @@ export async function createLessonProposal(name: string, task: string): Promise<
       error: { code: 'SECRET_DETECTED', message: `Potential secret detected: ${secrets[0].category} at ${secrets[0].safe_location}. Content rejected.` },
     }
   }
-  if (!acquireWriteLock('lesson_proposal')) return writeLockBusyError()
+  if (!acquireWriteLock('lesson_proposal')) return writeLockBusyError() as AdapterResult<{ message: string; proposal_id?: string }>
   const t0 = Date.now()
   try {
     const args = ['propose', 'lesson', name, '--task', task]
@@ -465,7 +465,7 @@ async function withTiming<T>(op: string, fn: () => Promise<AdapterResult<T>>): P
 }
 
 export async function checkHealth(): Promise<AdapterResult<Record<string, unknown>>> {
-  return withTiming('health', async () => {
+  return withTiming<Record<string, unknown>>('health', async (): Promise<AdapterResult<Record<string, unknown>>> => {
     const t0 = Date.now()
     try {
       const { stdout } = await runAkm(['health'], loadConfig().processTimeout)
@@ -481,7 +481,7 @@ export async function checkHealth(): Promise<AdapterResult<Record<string, unknow
 }
 
 export async function getStatus(): Promise<AdapterResult<AkmStatus>> {
-  return withTiming('status', async () => {
+  return withTiming<AkmStatus>('status', async (): Promise<AdapterResult<AkmStatus>> => {
     const t0 = Date.now()
     try {
       const [healthOut, infoOut] = await Promise.all([
@@ -510,7 +510,7 @@ export async function getStatus(): Promise<AdapterResult<AkmStatus>> {
 }
 
 export async function listSources(): Promise<AdapterResult<AkmSource[]>> {
-  return withTiming('sources', async () => {
+  return withTiming<AkmSource[]>('sources', async (): Promise<AdapterResult<AkmSource[]>> => {
     const t0 = Date.now()
     try {
       const { stdout } = await runAkm(['list'], loadConfig().processTimeout)
@@ -535,7 +535,7 @@ export async function listSources(): Promise<AdapterResult<AkmSource[]>> {
 }
 
 export async function getCapabilities(): Promise<AdapterResult<AkmCapability[]>> {
-  return withTiming('capabilities', async () => {
+  return withTiming<AkmCapability[]>('capabilities', async (): Promise<AdapterResult<AkmCapability[]>> => {
     const t0 = Date.now()
     try {
       const { stdout } = await runAkm(['info'], loadConfig().processTimeout)
@@ -564,7 +564,7 @@ export async function getCapabilities(): Promise<AdapterResult<AkmCapability[]>>
 }
 
 export async function getStats(): Promise<AdapterResult<AkmStats>> {
-  return withTiming('stats', async () => {
+  return withTiming<AkmStats>('stats', async (): Promise<AdapterResult<AkmStats>> => {
     const t0 = Date.now()
     try {
       const { stdout } = await runAkm(['info'], loadConfig().processTimeout)
@@ -594,7 +594,7 @@ interface SearchOptions {
 }
 
 export async function search(opts: SearchOptions): Promise<AdapterResult<AkmSearchHit[]>> {
-  return withTiming('search', async () => {
+  return withTiming<AkmSearchHit[]>('search', async (): Promise<AdapterResult<AkmSearchHit[]>> => {
     const t0 = Date.now()
     const cfg = loadConfig()
 
@@ -637,7 +637,7 @@ interface ShowOptions {
 }
 
 export async function showResource(opts: ShowOptions): Promise<AdapterResult<AkmResource>> {
-  return withTiming('show', async () => {
+  return withTiming<AkmResource>('show', async (): Promise<AdapterResult<AkmResource>> => {
     const t0 = Date.now()
     const cfg = loadConfig()
 

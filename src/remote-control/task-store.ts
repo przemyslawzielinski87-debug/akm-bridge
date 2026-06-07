@@ -303,7 +303,7 @@ export class TaskStore {
     if (keys.length === 0) return
     const sets = keys.map((k) => `${k} = ?`).join(', ')
     const vals = keys.map((k) => (patch as Record<string, unknown>)[k])
-    this.db.query(`UPDATE tasks SET ${sets} WHERE id = ?`).run(...vals, id)
+    this.db.query(`UPDATE tasks SET ${sets} WHERE id = ?`).run(...vals as any[], id)
   }
 
   listTasks(opts: {
@@ -342,7 +342,7 @@ export class TaskStore {
       .query(
         `SELECT * FROM tasks ${clause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
       )
-      .all(...params, limit, offset) as Task[]
+      .all(...params as any[], limit, offset) as Task[]
   }
 
   nextQueuedTask(): Task | null {

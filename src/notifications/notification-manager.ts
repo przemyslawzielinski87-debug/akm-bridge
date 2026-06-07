@@ -45,7 +45,7 @@ export class NotificationManager {
   getStats(): NotificationManagerStats {
     return {
       queued: this.store.count({ status: 'queued' }),
-      unread: this.store.count({ status: 'delivered', read: false }),
+      unread: this.store.count({ status: 'sent' }),
       failed: this.store.count({ status: 'failed' })
     };
   }
@@ -53,7 +53,7 @@ export class NotificationManager {
   async getChannelStatus(): Promise<Record<string, ChannelStatus>> {
     const status: Record<string, ChannelStatus> = {};
     
-    const channels: Record<string, { adapter: { health(): Promise<{ ok: boolean; degraded?: boolean }> } | null }> = {
+    const channels: Record<string, { adapter: { health(): Promise<AdapterHealth> } | null }> = {
       dashboard: { adapter: this.dashboard },
       pwa: { adapter: this.pwa },
       email: { adapter: this.email },
@@ -69,7 +69,7 @@ export class NotificationManager {
       
       const health = await adapter.health();
       status[channel] = {
-        status: health.ok ? 'healthy' : 
+        status: health.healthy ? 'healthy' : 
           health.degraded ? 'degraded' : 'failed',
         lastSuccess: this.store.getLastSuccess(channel),
         lastFailure: this.store.getLastFailure(channel)

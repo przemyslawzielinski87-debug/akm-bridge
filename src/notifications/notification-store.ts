@@ -330,12 +330,10 @@ export class NotificationStore {
 
 function loadBunSqlite(): new (path: string) => unknown {
   try {
-    // @ts-ignore - bun:sqlite is a Bun built-in
     const mod = require("bun:sqlite");
     return mod.Database;
   } catch {
     try {
-      // @ts-ignore
       const mod = require("bun:sqlite").default || require("bun:sqlite");
       return mod.Database;
     } catch {

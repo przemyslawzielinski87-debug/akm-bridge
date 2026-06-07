@@ -151,7 +151,7 @@ function html(content: string): Response {
 }
 
 function wrapResponse(data: unknown, req: Request): Response {
-  const origin = req.headers.get('origin')
+  const origin = req.headers.get('origin') ?? undefined
   const cors = corsHeaders(origin)
   return new Response(JSON.stringify(data), {
     status: 200,
@@ -222,7 +222,7 @@ const server = Bun.serve({
 
     // CORS preflight
     if (method === 'OPTIONS') {
-      const origin = req.headers.get('origin')
+      const origin = req.headers.get('origin') ?? undefined
       return new Response(null, {
         status: 204,
         headers: {

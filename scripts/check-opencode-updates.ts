@@ -200,11 +200,12 @@ async function main() {
     if (!jsonOutput) console.log("Checking plugins...");
     for (const [name, version] of Object.entries(lock.plugins)) {
       const latest = await checkNpmPackage(name);
+      const ver = String(version);
       if (latest) {
-        const { updateType, updateAvailable } = classifyUpdate(version, latest);
+        const { updateType, updateAvailable } = classifyUpdate(ver, latest);
         components.push({
           component: `plugin:${name}`,
-          installed: version,
+          installed: ver,
           latestStable: latest,
           updateAvailable,
           updateType,
@@ -255,7 +256,7 @@ async function main() {
     for (const [name, status] of Object.entries(lock.mcpServers)) {
       components.push({
         component: `mcp:${name}`,
-        installed: status,
+        installed: String(status),
         latestStable: "check registry",
         updateAvailable: false,
         updateType: "none",

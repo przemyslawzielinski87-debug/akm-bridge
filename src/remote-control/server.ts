@@ -209,7 +209,7 @@ function json(data: unknown, status = 200, req?: Request): Response {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       ...securityHeaders(),
-      ...corsHeaders(origin),
+      ...corsHeaders(origin ?? undefined),
     },
   })
 }
@@ -221,7 +221,7 @@ function html(content: string, req?: Request): Response {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       ...securityHeaders(),
-      ...corsHeaders(origin),
+      ...corsHeaders(origin ?? undefined),
       'Cache-Control': 'no-cache',
     },
   })
@@ -302,7 +302,7 @@ const notifHandlers = buildNotificationRoutes({
     store.audit({ action, session_id: undefined, task_id: target, agent: undefined, detail: outcome, ip_address: undefined }),
   isAllowedOrigin: (origin) => isAllowedOrigin(origin ?? undefined),
   securityHeaders: () => securityHeaders(),
-  corsHeaders: (origin) => corsHeaders(origin ?? null),
+  corsHeaders: (origin) => corsHeaders(origin ?? undefined),
   errorResponse: (msg, status, req) => errorResponse(msg, status, req),
   okResponse: (data, req) => okResponse(data, req),
   rateLimit: (ip: string, key: string, limit: number, windowMs: number) => {
@@ -342,7 +342,7 @@ const server = Bun.serve({
 
     // CORS preflight
     if (method === 'OPTIONS') {
-      const origin = req.headers.get('origin')
+      const origin = req.headers.get('origin') ?? undefined
       return new Response(null, {
         status: 204,
         headers: { ...securityHeaders(), ...corsHeaders(origin) },
@@ -747,7 +747,7 @@ const server = Bun.serve({
           const validation = validateTask({
             project: projectPath,
             agent: body.agent,
-            cmd: body.command,
+            command: body.command,
             prompt_summary: body.prompt_summary ?? '',
             full_prompt: body.full_prompt,
             created_by: session.userId,
@@ -763,12 +763,13 @@ const server = Bun.serve({
             )
           }
 
+          const taskId = randomUUID()
+
           // Check project lock for write tasks
           if (!body.read_only && !body.dry_run && resolved) {
-            const envName = environment as any
             const lockResult = acquireLock(
               resolved.profile,
-              envName,
+              environment as any,
               taskId,
               'write',
               600_000
@@ -787,8 +788,6 @@ const server = Bun.serve({
               return errorResponse(budgetCheck.reason ?? 'Budget exceeded', 429, req)
             }
           }
-
-          const taskId = randomUUID()
           const task = store.createTask({
             id: taskId,
             project: projectPath,

@@ -17,7 +17,7 @@
     "validate:docs": "tsx scripts/validate-docs.ts",
     "test:jest": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
     "test:vitest": "node node_modules/.bin/vitest run",
-    "test:bun": "bun test tests/notifications.test.ts tests/safe-recovery.test.ts",
+    "test:bun": "/root/.bun/bin/bun test tests/notifications.test.ts tests/safe-recovery.test.ts",
     "test:all": "node --experimental-vm-modules node_modules/.bin/jest --forceExit && npx vitest run && bun test tests/notifications.test.ts tests/safe-recovery.test.ts",
     "test:matrix": "tsx scripts/run-test-matrix.ts",
     "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit",
@@ -31,6 +31,8 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.20",
+    "@types/nodemailer": "^8.0.0",
+    "bun-types": "^1.3.14",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
     "typescript": "^5.9.3",

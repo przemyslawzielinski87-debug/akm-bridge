@@ -31,6 +31,7 @@ export function writeLockBusyError() {
   return {
     ok: false,
     data: null,
+    meta: { operation: 'write_lock', duration_ms: 0, truncated: false },
     error: { code: 'AKM_WRITE_BUSY', message: 'Another AKM write operation is currently running.' },
   }
 }

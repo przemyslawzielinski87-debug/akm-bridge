@@ -146,7 +146,7 @@ export class TaskWorker {
       this.environmentLocks.set(envLockKey, task.id)
     }
 
-    const budgetCheck = profile ? checkBudget(profile, 1000, 4000, isWrite) : { allowed: true }
+    const budgetCheck: { allowed: boolean; reason?: string } = profile ? checkBudget(profile, 1000, 4000, isWrite) : { allowed: true }
     if (!budgetCheck.allowed) {
       this.store.updateTask(task.id, {
         status: 'failed',
@@ -241,7 +241,7 @@ export class TaskWorker {
       }
 
       if (profile) {
-        recordUsage(profile, isWrite ? 'write' : 'read', result.tokenUsage.input + result.tokenUsage.output)
+        recordUsage(profile, result.tokenUsage.input, result.tokenUsage.output, isWrite)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -258,7 +258,8 @@ export class TaskWorker {
       if (environment) {
         this.environmentLocks.delete(`${task.project_lock ?? task.project}:${environment}`)
       }
-      releaseLock(task.project_lock ?? task.project)
+      const relProfile = profile ?? { id: 'unclassified', environments: { local: { writePolicy: 'allow' as const } } } as any
+      releaseLock(relProfile, (task.environment ?? 'local') as any, task.id)
     }
   }
 

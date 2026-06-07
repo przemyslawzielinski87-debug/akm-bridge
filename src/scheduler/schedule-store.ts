@@ -428,7 +428,7 @@ export class ScheduleStore {
     }
 
     query += " ORDER BY created_at DESC";
-    const rows = this.db.query(query).all(...params) as Row[];
+    const rows = this.db.query(query).all(...params as any[]) as Row[];
     return rows.map(rowToSchedule);
   }
 
@@ -463,7 +463,7 @@ export class ScheduleStore {
     const values = fields.map((f) => (merged as Record<string, unknown>)[f]);
 
     this.db.query(`UPDATE schedules SET ${setClause} WHERE id = ?`).run(
-      ...values,
+      ...values as any[],
       id,
     );
 
@@ -585,7 +585,7 @@ export class ScheduleStore {
 
     this.db
       .query(`UPDATE schedule_runs SET ${setClause} WHERE id = ?`)
-      .run(...values, runId);
+      .run(...values as any[], runId);
 
     return this.getRun(runId);
   }
@@ -682,7 +682,7 @@ export class ScheduleStore {
     query += " ORDER BY created_at DESC LIMIT ?";
     params.push(limit);
 
-    return this.db.query(query).all(...params) as NotificationDelivery[];
+    return this.db.query(query).all(...params as any[]) as NotificationDelivery[];
   }
 
   // -------------------------------------------------------------------------

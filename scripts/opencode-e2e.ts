@@ -168,15 +168,16 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
           currentKey = topKeys[topKeys.length - 1];
           const existing = result[currentKey];
           if (typeof existing === "string") {
-            setValue(result, currentKey, existing + " " + line.trim());
+            setValue(result, currentKey!, existing + " " + line.trim());
           }
         }
         continue;
       }
 
-      const parentObj = parent.obj[parent.key] as Record<string, unknown>;
+      const parentKey = parent.key ?? '';
+      const parentObj = parent.obj[parentKey] as Record<string, unknown>;
       const childColonIdx = trimmedContent.indexOf(":");
-      if (childColonIdx === -1 && bulletMatch) {
+      if (childColonIdx === -1 && bulletMatch && currentKey) {
         if (!Array.isArray(parentObj[currentKey])) {
           setValue(parentObj, currentKey, []);
         }
