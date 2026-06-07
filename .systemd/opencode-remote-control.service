@@ -1,0 +1,26 @@
+[Unit]
+Description=OpenCode Remote Control Server
+After=network.target opencode.service akm-bridge.service opencode-dashboard.service
+
+[Service]
+Type=simple
+ExecStart=/root/.bun/bin/bun run /root/projekt/akm-bridge/src/remote-control/server.ts
+WorkingDirectory=/root/projekt/akm-bridge
+Restart=on-failure
+RestartSec=10
+User=root
+Environment=REMOTE_PORT=4201
+Environment=REMOTE_HOST=127.0.0.1
+Environment=OPENCODE_ATTACH_URL=http://127.0.0.1:4097
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/root/.config/opencode /root/.local/state /root/projekt/akm-bridge /root/.local/share/opencode
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+{
+  "name": "OpenCode Remote Control",
+  "short_name": "OC Remote",
+  "description": "Secure mobile task control for OpenCode",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#58a6ff",
+  "icons": []
+}

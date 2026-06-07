@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0d1117" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>OpenCode Remote</title>
+<link rel="manifest" href="/static/manifest.json" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg-card:#161b22;--bg-card-hover:#1c2129;--bg-input:#0d1117;
+  --border:#30363d;--border-focus:#58a6ff;
+  --text:#e6edf3;--text-secondary:#8b949e;--text-muted:#484f58;
+  --accent:#58a6ff;--accent-hover:#79c0ff;
+  --green:#3fb950;--green-bg:rgba(63,185,80,.15);
+  --red:#f85149;--red-bg:rgba(248,81,73,.15);
+  --yellow:#d29922;--yellow-bg:rgba(210,153,34,.15);
+  --orange:#db6d28;
+  --radius:8px;--radius-lg:12px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  --mono:'SF Mono',Monaco,Consolas,monospace;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:var(--font);cursor:pointer;border:none;font-size:14px}
+input,select,textarea{font-family:var(--font);font-size:14px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Header ── */
+.header{position:sticky;top:0;z-index:100;background:var(--bg-card);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px}
+.header h1{font-size:16px;font-weight:600;white-space:nowrap}
+.header .status-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+.status-online{background:var(--green-bg);color:var(--green)}
+.status-offline{background:var(--red-bg);color:var(--red)}
+.header .spacer{flex:1}
+.header button{background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);padding:4px 12px;border-radius:var(--radius);font-size:12px;min-height:32px}
+.header button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg-card);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:10px 16px;font-size:13px;color:var(--text-secondary);background:none;border-bottom:2px solid transparent;white-space:nowrap;min-height:44px;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .badge{background:var(--yellow-bg);color:var(--yellow);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+
+/* ── Content ── */
+.content{padding:12px;max-width:900px;margin:0 auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── Cards ── */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.card-body{font-size:13px;color:var(--text-secondary)}
+.card-footer{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── Task cards ── */
+.task-status{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.task-status.queued{background:var(--yellow-bg);color:var(--yellow)}
+.task-status.running{background:rgba(56,139,253,.15);color:var(--accent)}
+.task-status.completed{background:var(--green-bg);color:var(--green)}
+.task-status.failed{background:var(--red-bg);color:var(--red)}
+.task-status.cancelled{background:rgba(139,148,158,.15);color:var(--text-secondary)}
+.task-meta{display:flex;gap:12px;font-size:12px;color:var(--text-muted);margin-top:6px;flex-wrap:wrap}
+.task-meta span{display:flex;align-items:center;gap:4px}
+.task-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.task-detail.open{display:block}
+.timeline{list-style:none;padding:0}
+.timeline li{font-size:12px;color:var(--text-secondary);padding:4px 0;border-left:2px solid var(--border);padding-left:12px;margin-bottom:4px}
+.timeline li .time{color:var(--text-muted);font-family:var(--mono);font-size:11px}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);padding:6px 14px;border-radius:var(--radius);font-size:12px;min-height:36px}
+.filter-btn:hover{border-color:var(--accent)}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── Forms ── */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius);min-height:40px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(88,166,255,.2)}
+.form-group textarea{min-height:100px;resize:vertical}
+.form-group .hint{font-size:11px;color:var(--text-muted);margin-top:3px}
+.form-row{display:flex;gap:12px}
+.form-row .form-group{flex:1}
+.toggle-row{display:flex;gap:16px;align-items:center}
+.toggle{position:relative;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;inset:0;background:var(--border);border-radius:11px;cursor:pointer;transition:.2s}
+.toggle .slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked+.slider{background:var(--accent)}
+.toggle input:checked+.slider::before{transform:translateX(18px)}
+.toggle-label{font-size:13px;color:var(--text-secondary)}
+
+/* ── Buttons ── */
+.btn{padding:8px 16px;border-radius:var(--radius);font-weight:500;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-success{background:var(--green);color:#fff;min-height:48px;font-size:15px;font-weight:600;padding:10px 24px}
+.btn-success:hover{filter:brightness(1.1)}
+.btn-danger{background:var(--red);color:#fff;min-height:48px;font-size:15px;font-weight:600;padding:10px 24px}
+.btn-danger:hover{filter:brightness(1.1)}
+.btn-outline{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:4px 10px;font-size:12px;min-height:32px}
+.btn-block{width:100%}
+
+/* ── Approval cards ── */
+.approval-card{border-left:3px solid var(--yellow)}
+.approval-card.risk-high{border-left-color:var(--red)}
+.approval-card .risk-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.risk-high{background:var(--red-bg);color:var(--red)}
+.risk-medium{background:var(--yellow-bg);color:var(--yellow)}
+.risk-low{background:var(--green-bg);color:var(--green)}
+.approval-actions{display:flex;gap:8px;margin-top:12px}
+.countdown{font-family:var(--mono);font-size:13px;color:var(--yellow)}
+
+/* ── Activity timeline ── */
+.activity-list{list-style:none;padding:0}
+.activity-item{padding:8px 12px;border-left:3px solid var(--border);margin-bottom:4px;font-size:13px}
+.activity-item.event-task_created{border-left-color:var(--accent)}
+.activity-item.event-task_started{border-left-color:var(--accent)}
+.activity-item.event-task_completed{border-left-color:var(--green)}
+.activity-item.event-task_failed{border-left-color:var(--red)}
+.activity-item.event-task_cancelled{border-left-color:var(--text-muted)}
+.activity-item.event-permission_requested{border-left-color:var(--yellow)}
+.activity-item.event-approval_granted{border-left-color:var(--green)}
+.activity-item.event-approval_rejected{border-left-color:var(--red)}
+.activity-item .event-time{font-family:var(--mono);font-size:11px;color:var(--text-muted)}
+.activity-item .event-type{font-weight:600;margin-right:6px}
+
+/* ── Artifact list ── */
+.artifact-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.artifact-item:last-child{border-bottom:none}
+.artifact-name{font-weight:500;flex:1}
+.artifact-size{font-size:12px;color:var(--text-muted);font-family:var(--mono)}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state p{margin-top:8px;font-size:13px}
+
+/* ── Secret warning ── */
+.warning{background:var(--yellow-bg);color:var(--yellow);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;display:none}
+.warning.visible{display:block}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:var(--radius);font-size:13px;z-index:200;transform:translateY(100px);opacity:0;transition:.3s;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-success{background:var(--green);color:#fff}
+.toast-error{background:var(--red);color:#fff}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  .content{padding:8px}
+  .form-row{flex-direction:column;gap:0}
+  .card{padding:12px}
+  .header h1{font-size:14px}
+  .tabs{gap:0}
+  .tab{padding:10px 12px;font-size:12px}
+}
+
+/* ── Login ── */
+.login-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:300}
+.login-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:320px;max-width:90vw}
+.login-box h2{font-size:18px;margin-bottom:16px;text-align:center}
+.login-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
+</style>
+</head>
+<body>
+
+<!-- Login overlay (shown when auth is required and no session) -->
+<div id="login-overlay" class="login-overlay" style="display:none">
+  <div class="login-box">
+    <h2>OpenCode Remote</h2>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary btn-block" onclick="attemptLogin()">Login</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="app" style="display:none">
+  <!-- Header -->
+  <div class="header">
+    <h1>OpenCode Remote</h1>
+    <span id="status-badge" class="status-badge status-offline">Offline</span>
+    <div class="spacer"></div>
+    <button onclick="refreshAll()" title="Refresh">↻ Refresh</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="tasks" onclick="switchTab('tasks')">Tasks</button>
+    <button class="tab" data-tab="new-task" onclick="switchTab('new-task')">+ New Task</button>
+    <button class="tab" data-tab="approvals" onclick="switchTab('approvals')">Approvals <span id="approval-count" class="badge" style="display:none">0</span></button>
+    <button class="tab" data-tab="activity" onclick="switchTab('activity')">Activity</button>
+    <button class="tab" data-tab="artifacts" onclick="switchTab('artifacts')">Artifacts</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ── Tasks Tab ── -->
+    <div id="tab-tasks" class="tab-panel active">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all" onclick="filterTasks('all')">All</button>
+        <button class="filter-btn" data-filter="queued" onclick="filterTasks('queued')">Queued</button>
+        <button class="filter-btn" data-filter="running" onclick="filterTasks('running')">Running</button>
+        <button class="filter-btn" data-filter="completed" onclick="filterTasks('completed')">Completed</button>
+        <button class="filter-btn" data-filter="failed" onclick="filterTasks('failed')">Failed</button>
+      </div>
+      <div id="task-list">
+        <div class="empty-state"><p>Loading tasks...</p></div>
+      </div>
+    </div>
+
+    <!-- ── New Task Tab ── -->
+    <div id="tab-new-task" class="tab-panel">
+      <div class="card">
+        <div class="card-header"><strong>Create New Task</strong></div>
+        <div class="card-body">
+          <div id="secret-warning" class="warning">
+            ⚠ Potential secret detected in prompt. Remove sensitive data before submitting.
+          </div>
+          <div class="form-group">
+            <label>Project</label>
+            <select id="task-project"><option value="">Loading projects...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Mode</label>
+            <div style="display:flex;gap:8px">
+              <button class="filter-btn active" id="mode-prompt" onclick="setTaskMode('prompt')">Prompt</button>
+              <button class="filter-btn" id="mode-command" onclick="setTaskMode('command')">Custom Command</button>
+            </div>
+          </div>
+          <div class="form-group" id="agent-group">
+            <label>Agent (optional)</label>
+            <select id="task-agent">
+              <option value="">Default</option>
+              <option value="akm-build">akm-build</option>
+              <option value="meridian-dev">meridian-dev</option>
+              <option value="infra-ops">infra-ops</option>
+              <option value="reviewer">reviewer</option>
+              <option value="security-auditor">security-auditor</option>
+              <option value="release-manager">release-manager</option>
+              <option value="researcher">researcher</option>
+            </select>
+          </div>
+          <div class="form-group" id="command-group" style="display:none">
+            <label>Command</label>
+            <select id="task-command">
+              <option value="read">read</option>
+              <option value="write">write</option>
+              <option value="edit">edit</option>
+              <option value="search">search</option>
+              <option value="execute">execute</option>
+              <option value="review">review</option>
+              <option value="deploy">deploy</option>
+              <option value="test">test</option>
+              <option value="build">build</option>
+              <option value="analyze">analyze</option>
+              <option value="research">research</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prompt</label>
+            <textarea id="task-prompt" placeholder="Describe the task for the agent..." oninput="checkSecrets()"></textarea>
+            <div class="hint">Max 500 characters summary. Secrets will be rejected.</div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Priority</label>
+              <select id="task-priority">
+                <option value="low">Low</option>
+                <option value="normal" selected>Normal</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Options</label>
+              <div class="toggle-row">
+                <label class="toggle"><input type="checkbox" id="task-readonly" /><span class="slider"></span></label>
+                <span class="toggle-label">Read-only</span>
+              </div>
+              <div class="toggle-row" style="margin-top:6px">
+                <label class="toggle"><input type="checkbox" id="task-dryrun" /><span class="slider"></span></label>
+                <span class="toggle-label">Dry-run</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" id="submit-task-btn" onclick="submitTask()">Create Task</button>
+          <div id="task-submit-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Approvals Tab ── -->
+    <div id="tab-approvals" class="tab-panel">
+      <div id="approval-list">
+        <div class="empty-state"><p>No pending approvals</p></div>
+      </div>
+    </div>
+
+    <!-- ── Activity Tab ── -->
+    <div id="tab-activity" class="tab-panel">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span id="sse-status" style="font-size:12px;color:var(--text-muted)">Connecting...</span>
+        <div class="spacer"></div>
+        <button class="btn btn-sm btn-outline" id="pause-btn" onclick="togglePause()">Pause</button>
+      </div>
+      <ul id="activity-list" class="activity-list">
+        <li class="empty-state"><p>Waiting for events...</p></li>
+      </ul>
+    </div>
+
+    <!-- ── Artifacts Tab ── -->
+    <div id="tab-artifacts" class="tab-panel">
+      <div id="artifact-list">
+        <div class="empty-state"><p>Select a task to view artifacts</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── State ── */
+  const state = {
+    csrfToken: null,
+    tasks: [],
+    currentFilter: 'all',
+    currentTab: 'tasks',
+    activityPaused: false,
+    activityEvents: [],
+    approvalPollTimer: null,
+    taskPollTimer: null,
+    sseSource: null,
+    countdownInterval: null,
+  };
+
+  const SECRET_PATTERNS = [
+    /(?:password|secret|token|api[_-]?key|credential)\s*[:=]\s*["']?[^\s"']{8,}/gi,
+    /(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}/g,
+    /(?:sk|pk)[-_][A-Za-z0-9]{20,}/g,
+  ];
+
+  /* ── Auth ── */
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (state.csrfToken && opts.method && opts.method !== 'GET') {
+      headers['X-CSRF-Token'] = state.csrfToken;
+    }
+    const res = await fetch(path, { ...opts, headers, credentials: 'same-origin' });
+    if (res.status === 401) {
+      showLogin();
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(body.error || res.statusText);
+    }
+    return res.json();
+  }
+
+  function showLogin() {
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+
+  function showApp() {
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  window.attemptLogin = async function() {
+    const pw = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showApp();
+        init();
+      } else {
+        errEl.textContent = data.error || 'Login failed';
+        errEl.style.display = 'block';
+      }
+    } catch (e) {
+      errEl.textContent = 'Connection error';
+      errEl.style.display = 'block';
+    }
+  };
+
+  /* ── CSRF ── */
+  async function fetchCsrfToken() {
+    try {
+      const res = await apiFetch('/api/csrf-token');
+      if (res.ok) state.csrfToken = res.token;
+    } catch {}
+  }
+
+  /* ── Tab switching ── */
+  window.switchTab = function(name) {
+    state.currentTab = name;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    if (name === 'approvals') loadApprovals();
+    if (name === 'artifacts') loadArtifacts();
+    if (name === 'tasks') loadTasks();
+  };
+
+  /* ── Tasks ── */
+  window.filterTasks = function(filter) {
+    state.currentFilter = filter;
+    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+    loadTasks();
+  };
+
+  async function loadTasks() {
+    try {
+      const params = new URLSearchParams();
+      if (state.currentFilter !== 'all') params.set('status', state.currentFilter);
+      params.set('limit', '100');
+      const res = await apiFetch('/api/tasks?' + params.toString());
+      state.tasks = res.data || [];
+      renderTasks();
+    } catch (e) {
+      document.getElementById('task-list').innerHTML = '<div class="empty-state"><p>Failed to load tasks</p></div>';
+    }
+  }
+
+  function renderTasks() {
+    const el = document.getElementById('task-list');
+    if (!state.tasks.length) {
+      el.innerHTML = '<div class="empty-state"><p>No tasks found</p></div>';
+      return;
+    }
+    el.innerHTML = state.tasks.map(t => {
+      const time = t.started_at ? new Date(t.started_at).toLocaleTimeString() : new Date(t.created_at).toLocaleTimeString();
+      const date = new Date(t.created_at).toLocaleDateString();
+      const tokenInfo = t.token_input ? `${t.token_input + t.token_output} tok` : '';
+      return `
+        <div class="card" onclick="toggleTaskDetail('${t.id}')">
+          <div class="card-header">
+            <span class="task-status ${t.status}">${t.status}</span>
+            <span style="font-weight:500;font-size:13px">${escapeHtml(t.prompt_summary)}</span>
+          </div>
+          <div class="task-meta">
+            <span>📁 ${escapeHtml(t.project.split('/').pop())}</span>
+            ${t.agent ? `<span>🤖 ${escapeHtml(t.agent)}</span>` : ''}
+            <span>🕐 ${date} ${time}</span>
+            ${tokenInfo ? `<span>📊 ${tokenInfo}</span>` : ''}
+            ${t.priority !== 'normal' ? `<span style="color:var(--yellow)">${t.priority}</span>` : ''}
+          </div>
+          <div class="task-detail" id="detail-${t.id}">
+            <div style="margin-bottom:8px">
+              <strong>ID:</strong> <code style="font-size:11px;color:var(--text-muted)">${t.id}</code>
+            </div>
+            ${t.error ? `<div style="color:var(--red);font-size:12px;margin-bottom:8px">${escapeHtml(t.error)}</div>` : ''}
+            ${t.result_summary ? `<div style="font-size:12px;margin-bottom:8px;color:var(--text-secondary)">${escapeHtml(t.result_summary)}</div>` : ''}
+            <div class="card-footer">
+              ${(t.status === 'queued' || t.status === 'running') ?
+                `<button class="btn btn-sm btn-outline" style="color:var(--red);border-color:var(--red)" onclick="event.stopPropagation();cancelTask('${t.id}')">Cancel</button>` : ''}
+              ${(t.status === 'failed' || t.status === 'cancelled') ?
+                `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();retryTask('${t.id}')">Retry</button>` : ''}
+              <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();viewArtifacts('${t.id}')">Artifacts</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window.toggleTaskDetail = function(id) {
+    const el = document.getElementById('detail-' + id);
+    if (el) el.classList.toggle('open');
+  };
+
+  window.cancelTask = async function(id) {
+    if (!confirm('Cancel this task?')) return;
+    try {
+      await apiFetch('/api/tasks/' + id + '/cancel', { method: 'POST' });
+      toast('Task cancelled', 'success');
+      loadTasks();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.retryTask = async function(id) {
+    try {
+      await apiFetch('/api/tasks/' + id + '/retry', { method: 'POST' });
+      toast('Task retried', 'success');
+      loadTasks();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  /* ── New Task ── */
+  window.setTaskMode = function(mode) {
+    document.getElementById('mode-prompt').classList.toggle('active', mode === 'prompt');
+    document.getElementById('mode-command').classList.toggle('active', mode === 'command');
+    document.getElementById('command-group').style.display = mode === 'command' ? 'block' : 'none';
+  };
+
+  window.checkSecrets = function() {
+    const text = document.getElementById('task-prompt').value;
+    let hasSecret = false;
+    for (const pat of SECRET_PATTERNS) {
+      pat.lastIndex = 0;
+      if (pat.test(text)) { hasSecret = true; break; }
+    }
+    document.getElementById('secret-warning').classList.toggle('visible', hasSecret);
+  };
+
+  async function loadProjects() {
+    try {
+      const res = await apiFetch('/api/projects');
+      const sel = document.getElementById('task-project');
+      sel.innerHTML = (res.data || []).map(p =>
+        `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`
+      ).join('');
+    } catch {
+      document.getElementById('task-project').innerHTML = '<option value="">Failed to load</option>';
+    }
+  }
+
+  window.submitTask = async function() {
+    const errEl = document.getElementById('task-submit-error');
+    errEl.style.display = 'none';
+    const project = document.getElementById('task-project').value;
+    const prompt = document.getElementById('task-prompt').value.trim();
+    if (!project) { errEl.textContent = 'Project is required'; errEl.style.display = 'block'; return; }
+    if (!prompt) { errEl.textContent = 'Prompt is required'; errEl.style.display = 'block'; return; }
+
+    const isCommandMode = document.getElementById('mode-command').classList.contains('active');
+    const body = {
+      project,
+      prompt_summary: prompt.slice(0, 500),
+      full_prompt: prompt,
+      agent: document.getElementById('task-agent').value || undefined,
+      command: isCommandMode ? document.getElementById('task-command').value : undefined,
+      priority: document.getElementById('task-priority').value,
+      idempotency_key: crypto.randomUUID(),
+    };
+
+    try {
+      const btn = document.getElementById('submit-task-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      await apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify(body) });
+      toast('Task created', 'success');
+      document.getElementById('task-prompt').value = '';
+      document.getElementById('secret-warning').classList.remove('visible');
+      switchTab('tasks');
+      loadTasks();
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      const btn = document.getElementById('submit-task-btn');
+      btn.disabled = false;
+      btn.textContent = 'Create Task';
+    }
+  };
+
+  /* ── Approvals ── */
+  async function loadApprovals() {
+    try {
+      const res = await apiFetch('/api/approvals');
+      renderApprovals(res.data || []);
+    } catch {}
+  }
+
+  function renderApprovals(approvals) {
+    const el = document.getElementById('approval-list');
+    const badge = document.getElementById('approval-count');
+    if (approvals.length) {
+      badge.textContent = approvals.length;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    if (!approvals.length) {
+      el.innerHTML = '<div class="empty-state"><p>No pending approvals</p></div>';
+      return;
+    }
+    el.innerHTML = approvals.map(a => {
+      const riskClass = a.risk === 'high' ? 'risk-high' : a.risk === 'medium' ? 'risk-medium' : 'risk-low';
+      const expiresIn = Math.max(0, Math.floor((new Date(a.expires_at) - Date.now()) / 1000));
+      const mins = Math.floor(expiresIn / 60);
+      const secs = expiresIn % 60;
+      return `
+        <div class="card approval-card ${riskClass}">
+          <div class="card-header">
+            <span class="risk-badge ${riskClass}">${(a.risk || 'medium').toUpperCase()}</span>
+            <span style="font-weight:500">${escapeHtml(a.operation_class)}</span>
+            <span class="countdown" data-expires="${a.expires_at}">${mins}:${String(secs).padStart(2, '0')}</span>
+          </div>
+          <div class="card-body">
+            <div><strong>Agent:</strong> ${escapeHtml(a.agent)}</div>
+            <div><strong>Tool:</strong> <code>${escapeHtml(a.tool)}</code></div>
+            <div><strong>Summary:</strong> ${escapeHtml(a.safe_summary)}</div>
+            ${a.task_id ? `<div style="margin-top:4px"><strong>Task:</strong> <code style="font-size:11px">${a.task_id.slice(0, 8)}</code></div>` : ''}
+          </div>
+          <div class="approval-actions">
+            <button class="btn btn-success" onclick="approveAction('${a.id}')">✓ Approve</button>
+            <button class="btn btn-danger" onclick="rejectAction('${a.id}')">✕ Reject</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window.approveAction = async function(id) {
+    try {
+      await apiFetch('/api/approvals/' + id + '/approve', { method: 'POST' });
+      toast('Approved', 'success');
+      loadApprovals();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.rejectAction = async function(id) {
+    try {
+      await apiFetch('/api/approvals/' + id + '/reject', { method: 'POST' });
+      toast('Rejected', 'success');
+      loadApprovals();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  /* ── Activity / SSE ── */
+  function connectSSE() {
+    if (state.sseSource) state.sseSource.close();
+    const sse = new EventSource('/api/events', { withCredentials: true });
+    state.sseSource = sse;
+
+    sse.onopen = function() {
+      document.getElementById('sse-status').textContent = 'Connected';
+      document.getElementById('sse-status').style.color = 'var(--green)';
+    };
+
+    sse.onerror = function() {
+      document.getElementById('sse-status').textContent = 'Reconnecting...';
+      document.getElementById('sse-status').style.color = 'var(--yellow)';
+    };
+
+    const eventTypes = ['task_created', 'task_started', 'task_completed', 'task_failed', 'task_cancelled', 'permission_requested', 'approval_granted', 'approval_rejected'];
+    for (const evt of eventTypes) {
+      sse.addEventListener(evt, function(e) {
+        try {
+          const data = JSON.parse(e.data);
+          addActivityEvent(evt, data);
+          // Refresh relevant views
+          if (state.currentTab === 'tasks') loadTasks();
+          if (state.currentTab === 'approvals') loadApprovals();
+        } catch {}
+      });
+    }
+  }
+
+  function addActivityEvent(type, data) {
+    if (state.activityPaused) return;
+    const list = document.getElementById('activity-list');
+    // Remove empty state
+    const empty = list.querySelector('.empty-state');
+    if (empty) empty.remove();
+
+    const now = new Date().toLocaleTimeString();
+    const li = document.createElement('li');
+    li.className = 'activity-item event-' + type;
+    li.innerHTML = `<span class="event-time">${now}</span> <span class="event-type">[${escapeHtml(type)}]</span> ${escapeHtml(JSON.stringify(data).slice(0, 200))}`;
+    list.prepend(li);
+
+    // Keep max 200 items
+    while (list.children.length > 200) list.removeChild(list.lastChild);
+  }
+
+  window.togglePause = function() {
+    state.activityPaused = !state.activityPaused;
+    document.getElementById('pause-btn').textContent = state.activityPaused ? 'Resume' : 'Pause';
+  };
+
+  /* ── Artifacts ── */
+  async function loadArtifacts() {
+    // Show artifacts for the most recent task if none selected
+    const el = document.getElementById('artifact-list');
+    if (!state.tasks.length) {
+      el.innerHTML = '<div class="empty-state"><p>No tasks available</p></div>';
+      return;
+    }
+    el.innerHTML = '<div class="empty-state"><p>Select a task from the Tasks tab to view its artifacts</p></div>';
+  }
+
+  window.viewArtifacts = async function(taskId) {
+    switchTab('artifacts');
+    const el = document.getElementById('artifact-list');
+    try {
+      const res = await apiFetch('/api/tasks/' + taskId + '/artifacts');
+      const artifacts = res.data || [];
+      if (!artifacts.length) {
+        el.innerHTML = '<div class="empty-state"><p>No artifacts for this task</p></div>';
+        return;
+      }
+      el.innerHTML = artifacts.map(a => `
+        <div class="card">
+          <div class="artifact-item">
+            <span class="artifact-name">${escapeHtml(a.name || a.summary || 'Event')}</span>
+            <span class="artifact-size">${escapeHtml(a.event_type || '')}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch {
+      el.innerHTML = '<div class="empty-state"><p>Failed to load artifacts</p></div>';
+    }
+  };
+
+  /* ── Countdown timers ── */
+  function startCountdowns() {
+    state.countdownInterval = setInterval(() => {
+      document.querySelectorAll('.countdown[data-expires]').forEach(el => {
+        const expires = new Date(el.dataset.expires);
+        const left = Math.max(0, Math.floor((expires - Date.now()) / 1000));
+        const m = Math.floor(left / 60);
+        const s = left % 60;
+        el.textContent = m + ':' + String(s).padStart(2, '0');
+        if (left < 60) el.style.color = 'var(--red)';
+        else if (left < 180) el.style.color = 'var(--orange)';
+        else el.style.color = 'var(--yellow)';
+      });
+    }, 1000);
+  }
+
+  /* ── Refresh ── */
+  window.refreshAll = function() {
+    loadTasks();
+    if (state.currentTab === 'approvals') loadApprovals();
+    fetchCsrfToken();
+    toast('Refreshed', 'success');
+  };
+
+  /* ── Utilities ── */
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast toast-' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  /* ── Auto-refresh ── */
+  function startAutoRefresh() {
+    state.taskPollTimer = setInterval(() => {
+      if (state.currentTab === 'tasks') loadTasks();
+    }, 15_000);
+    state.approvalPollTimer = setInterval(() => {
+      if (state.currentTab === 'approvals') loadApprovals();
+    }, 10_000);
+  }
+
+  /* ── Notification permission ── */
+  function requestNotifications() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  /* ── Init ── */
+  async function init() {
+    await fetchCsrfToken();
+    await loadProjects();
+    await loadTasks();
+    connectSSE();
+    startCountdowns();
+    startAutoRefresh();
+    requestNotifications();
+    document.getElementById('status-badge').textContent = 'Online';
+    document.getElementById('status-badge').className = 'status-badge status-online';
+  }
+
+  // Check if auth is needed
+  (async function boot() {
+    try {
+      const res = await fetch('/api/health', { credentials: 'same-origin' });
+      if (res.ok) {
+        showApp();
+        init();
+      } else if (res.status === 401) {
+        showLogin();
+      } else {
+        showLogin();
+      }
+    } catch {
+      // Server might not require auth, try app directly
+      showApp();
+      init();
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
