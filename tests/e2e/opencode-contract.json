@@ -1,0 +1,305 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-06-07T12:00:00Z",
+  "agents": [
+    {
+      "name": "akm-build",
+      "mode": "primary",
+      "file": "/root/.config/opencode/agents/akm-build.md"
+    },
+    {
+      "name": "infra-ops",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/infra-ops.md"
+    },
+    {
+      "name": "meridian-dev",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/meridian-dev.md"
+    },
+    {
+      "name": "release-manager",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/release-manager.md"
+    },
+    {
+      "name": "researcher",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/researcher.md"
+    },
+    {
+      "name": "reviewer",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/reviewer.md"
+    },
+    {
+      "name": "security-auditor",
+      "mode": "subagent",
+      "file": "/root/.config/opencode/agents/security-auditor.md"
+    }
+  ],
+  "commands": [
+    {
+      "name": "/audit-opencode",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/audit-opencode.md"
+    },
+    {
+      "name": "/check-services",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/check-services.md"
+    },
+    {
+      "name": "/commit-safe",
+      "agent": "release-manager",
+      "file": "/root/.config/opencode/commands/commit-safe.md"
+    },
+    {
+      "name": "/context-audit",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/context-audit.md"
+    },
+    {
+      "name": "/deploy-safe",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/deploy-safe.md"
+    },
+    {
+      "name": "/learn",
+      "agent": "akm-build",
+      "file": "/root/.config/opencode/commands/learn.md"
+    },
+    {
+      "name": "/mcp-check",
+      "agent": "infra-ops",
+      "file": "/root/.config/opencode/commands/mcp-check.md"
+    },
+    {
+      "name": "/meridian-audit",
+      "agent": "reviewer",
+      "file": "/root/.config/opencode/commands/meridian-audit.md"
+    },
+    {
+      "name": "/meridian-fix",
+      "agent": "meridian-dev",
+      "file": "/root/.config/opencode/commands/meridian-fix.md"
+    },
+    {
+      "name": "/production-check",
+      "agent": "infra-ops",
+      "file": "/root/.config/opencode/commands/production-check.md"
+    },
+    {
+      "name": "/recover",
+      "agent": "infra-ops",
+      "file": "/root/.config/opencode/commands/recover.md"
+    },
+    {
+      "name": "/review-last-change",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/review-last-change.md"
+    },
+    {
+      "name": "/review",
+      "agent": "reviewer",
+      "file": "/root/.config/opencode/commands/review.md"
+    },
+    {
+      "name": "/security-scan",
+      "agent": "auto",
+      "file": "/root/.config/opencode/commands/security-scan.md"
+    }
+  ],
+  "skills": [
+    {
+      "name": "cloudflare-coolify-routing",
+      "file": "/root/.config/opencode/skills/cloudflare-coolify-routing/SKILL.md"
+    },
+    {
+      "name": "context-efficiency-audit",
+      "file": "/root/.config/opencode/skills/context-efficiency-audit/SKILL.md"
+    },
+    {
+      "name": "git-safe-workflow",
+      "file": "/root/.config/opencode/skills/git-safe-workflow/SKILL.md"
+    },
+    {
+      "name": "mcp-diagnostics",
+      "file": "/root/.config/opencode/skills/mcp-diagnostics/SKILL.md"
+    },
+    {
+      "name": "meridian-deploy",
+      "file": "/root/.config/opencode/skills/meridian-deploy/SKILL.md"
+    },
+    {
+      "name": "meridian-quick-fix",
+      "file": "/root/.config/opencode/skills/meridian-quick-fix/SKILL.md"
+    },
+    {
+      "name": "meridian-visual-regression",
+      "file": "/root/.config/opencode/skills/meridian-visual-regression/SKILL.md"
+    },
+    {
+      "name": "meridian-wordpress-development",
+      "file": "/root/.config/opencode/skills/meridian-wordpress-development/SKILL.md"
+    },
+    {
+      "name": "nginx-incident-response",
+      "file": "/root/.config/opencode/skills/nginx-incident-response/SKILL.md"
+    },
+    {
+      "name": "post-task-learning",
+      "file": "/root/.config/opencode/skills/post-task-learning/SKILL.md"
+    },
+    {
+      "name": "production-health-check",
+      "file": "/root/.config/opencode/skills/production-health-check/SKILL.md"
+    },
+    {
+      "name": "production-safety",
+      "file": "/root/.config/opencode/skills/production-safety/SKILL.md"
+    },
+    {
+      "name": "rollback-change",
+      "file": "/root/.config/opencode/skills/rollback-change/SKILL.md"
+    },
+    {
+      "name": "safe-git-release",
+      "file": "/root/.config/opencode/skills/safe-git-release/SKILL.md"
+    },
+    {
+      "name": "safe-project-audit",
+      "file": "/root/.config/opencode/skills/safe-project-audit/SKILL.md"
+    },
+    {
+      "name": "safe-recovery",
+      "file": "/root/.config/opencode/skills/safe-recovery/SKILL.md"
+    },
+    {
+      "name": "secret-safe-audit",
+      "file": "/root/.config/opencode/skills/secret-safe-audit/SKILL.md"
+    },
+    {
+      "name": "token-efficient-debug",
+      "file": "/root/.config/opencode/skills/token-efficient-debug/SKILL.md"
+    },
+    {
+      "name": "wordpress-safe-content-update",
+      "file": "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md"
+    }
+  ],
+  "mcpServers": [
+    {
+      "name": "context7",
+      "transport": "local stdio"
+    },
+    {
+      "name": "filesystem-project",
+      "transport": "local stdio"
+    },
+    {
+      "name": "github",
+      "transport": "local stdio"
+    },
+    {
+      "name": "lean-ctx",
+      "transport": "local stdio"
+    },
+    {
+      "name": "playwright",
+      "transport": "local stdio"
+    },
+    {
+      "name": "sequential-thinking",
+      "transport": "local stdio"
+    },
+    {
+      "name": "akm-bridge",
+      "transport": "local stdio"
+    }
+  ],
+  "criticalPlugins": [
+    "@tarquinen/opencode-dcp@3.1.12",
+    "opencode-pty@0.3.4",
+    "opencode-vibeguard@0.1.0",
+    "opencode-review-helper@0.3.1",
+    "opencode-websearch-cited@1.2.0",
+    "@ramtinj95/opencode-tokenscope@1.6.5",
+    "opencode-snip@1.6.1",
+    "@devtheops/opencode-plugin-otel@1.1.0"
+  ],
+  "requiredFiles": [
+    "/root/.config/opencode/opencode.json",
+    "/root/.config/opencode/AGENTS.md",
+    "/root/.config/opencode/agents/akm-build.md",
+    "/root/.config/opencode/agents/infra-ops.md",
+    "/root/.config/opencode/agents/meridian-dev.md",
+    "/root/.config/opencode/agents/release-manager.md",
+    "/root/.config/opencode/agents/researcher.md",
+    "/root/.config/opencode/agents/reviewer.md",
+    "/root/.config/opencode/agents/security-auditor.md",
+    "/root/.config/opencode/commands/audit-opencode.md",
+    "/root/.config/opencode/commands/check-services.md",
+    "/root/.config/opencode/commands/commit-safe.md",
+    "/root/.config/opencode/commands/context-audit.md",
+    "/root/.config/opencode/commands/deploy-safe.md",
+    "/root/.config/opencode/commands/learn.md",
+    "/root/.config/opencode/commands/mcp-check.md",
+    "/root/.config/opencode/commands/meridian-audit.md",
+    "/root/.config/opencode/commands/meridian-fix.md",
+    "/root/.config/opencode/commands/production-check.md",
+    "/root/.config/opencode/commands/recover.md",
+    "/root/.config/opencode/commands/review-last-change.md",
+    "/root/.config/opencode/commands/review.md",
+    "/root/.config/opencode/commands/security-scan.md",
+    "/root/.config/opencode/skills/cloudflare-coolify-routing/SKILL.md",
+    "/root/.config/opencode/skills/context-efficiency-audit/SKILL.md",
+    "/root/.config/opencode/skills/git-safe-workflow/SKILL.md",
+    "/root/.config/opencode/skills/mcp-diagnostics/SKILL.md",
+    "/root/.config/opencode/skills/meridian-deploy/SKILL.md",
+    "/root/.config/opencode/skills/meridian-quick-fix/SKILL.md",
+    "/root/.config/opencode/skills/meridian-visual-regression/SKILL.md",
+    "/root/.config/opencode/skills/meridian-wordpress-development/SKILL.md",
+    "/root/.config/opencode/skills/nginx-incident-response/SKILL.md",
+    "/root/.config/opencode/skills/post-task-learning/SKILL.md",
+    "/root/.config/opencode/skills/production-health-check/SKILL.md",
+    "/root/.config/opencode/skills/production-safety/SKILL.md",
+    "/root/.config/opencode/skills/rollback-change/SKILL.md",
+    "/root/.config/opencode/skills/safe-git-release/SKILL.md",
+    "/root/.config/opencode/skills/safe-project-audit/SKILL.md",
+    "/root/.config/opencode/skills/safe-recovery/SKILL.md",
+    "/root/.config/opencode/skills/secret-safe-audit/SKILL.md",
+    "/root/.config/opencode/skills/token-efficient-debug/SKILL.md",
+    "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md"
+  ],
+  "runtimeChecks": [
+    {
+      "id": "opencode-version",
+      "description": "Verify the OpenCode CLI or service version matches expected release"
+    },
+    {
+      "id": "agents-visible",
+      "description": "All 7 custom agent .md files are present and discoverable in /root/.config/opencode/agents/"
+    },
+    {
+      "id": "commands-visible",
+      "description": "All 14 command .md files are present and discoverable in /root/.config/opencode/commands/"
+    },
+    {
+      "id": "mcp-initialize",
+      "description": "All 7 enabled MCP servers initialize without JSON-RPC errors via tools/list"
+    },
+    {
+      "id": "akm-health",
+      "description": "AKM bridge responds to akm_health with ok status via MCP tool invocation"
+    },
+    {
+      "id": "permission-allow",
+      "description": "Primary agent (akm-build) has allow permissions for bash, edit, external_directory, webfetch"
+    },
+    {
+      "id": "permission-deny",
+      "description": "Read-only agents (researcher, reviewer, security-auditor) have deny on edit and external_directory where specified"
+    }
+  ]
+}

@@ -46,3 +46,27 @@ jobs:
 
       - name: MCP health check (CI mode)
         run: AKM_BINARY=./fixtures/fake-akm.sh bun run check:mcp-health
+
+  e2e-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: E2E static tests
+        run: bun run scripts/opencode-e2e.ts --static --json
