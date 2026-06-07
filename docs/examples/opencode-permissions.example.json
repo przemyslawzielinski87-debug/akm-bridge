@@ -1,0 +1,48 @@
+{
+  "agent": {
+    "reviewer": {
+      "description": "Read-only code review agent",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": "allow",
+        "webfetch": "ask",
+        "doom_loop": "deny",
+        "external_directory": "deny"
+      }
+    },
+    "developer": {
+      "description": "Project development agent",
+      "mode": "subagent",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "webfetch": "ask",
+        "doom_loop": "ask",
+        "external_directory": "ask"
+      }
+    },
+    "infra-ops": {
+      "description": "Infrastructure operations agent",
+      "mode": "subagent",
+      "permission": {
+        "edit": "ask",
+        "bash": "ask",
+        "webfetch": "allow",
+        "doom_loop": "deny",
+        "external_directory": "ask"
+      }
+    },
+    "research": {
+      "description": "Read-only research agent",
+      "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "bash": "allow",
+        "webfetch": "allow",
+        "doom_loop": "deny",
+        "external_directory": "deny"
+      }
+    }
+  }
+}
