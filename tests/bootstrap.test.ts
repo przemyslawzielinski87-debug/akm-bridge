@@ -801,3 +801,100 @@ describe("Multi-Project Governance Skill", () => {
     expect(content).not.toContain("writing-plans");
   });
 });
+
+describe("Performance Profiling", () => {
+  const perfDir = path.join(ROOT, "src", "performance");
+  const perfTypesFile = path.join(perfDir, "performance-types.ts");
+  const runnerFile = path.join(ROOT, "scripts", "run-performance-baseline.ts");
+  const baselineFile = path.join(ROOT, "performance", "baseline.json");
+  const commandTemplate = path.join(ROOT, "templates", "commands", "performance.md");
+  const skillDir = path.join(ROOT, "templates", "skills", "performance-profiling");
+  const skillFile = path.join(skillDir, "SKILL.md");
+  const docsFile = path.join(ROOT, "docs", "OPENCODE-PERFORMANCE-BASELINE.md");
+
+  it("performance types file exists", () => {
+    expect(exists(perfTypesFile)).toBe(true);
+  });
+
+  it("performance types export required symbols", () => {
+    if (!exists(perfTypesFile)) return;
+    const content = fs.readFileSync(perfTypesFile, "utf-8");
+    expect(content).toContain("export type BenchmarkStatus");
+    expect(content).toContain("export interface BenchmarkResult");
+    expect(content).toContain("export interface BaselineFile");
+    expect(content).toContain("export function computeStats");
+    expect(content).toContain("export function defaultThresholds");
+  });
+
+  it("benchmark runner exists and is executable", () => {
+    expect(exists(runnerFile)).toBe(true);
+    const content = fs.readFileSync(runnerFile, "utf-8");
+    expect(content).toContain("import");
+    expect(content).toContain("benchmark(");
+    expect(content).toContain("measureStartup");
+    expect(content).toContain("measureSqlite");
+    expect(content).toContain("measureDashboard");
+    expect(content).toContain("measureScheduler");
+    expect(content).toContain("measureMemory");
+    expect(content).toContain("main()");
+  });
+
+  it("baseline file exists with valid schema", () => {
+    expect(exists(baselineFile)).toBe(true);
+    const baseline = JSON.parse(fs.readFileSync(baselineFile, "utf-8"));
+    expect(baseline.schemaVersion).toBe(1);
+    expect(baseline.environment).toBeDefined();
+    expect(baseline.thresholds).toBeDefined();
+    expect(baseline.thresholds.latencyRegressionPercent).toBe(20);
+    expect(baseline.thresholds.absoluteLimits).toBeDefined();
+    expect(Object.keys(baseline.thresholds.absoluteLimits).length).toBeGreaterThan(5);
+  });
+
+  it("command template exists with valid structure", () => {
+    expect(exists(commandTemplate)).toBe(true);
+    const content = fs.readFileSync(commandTemplate, "utf-8");
+    expect(content).toContain("# Command: /performance");
+    expect(content).toContain("## Purpose");
+    expect(content).toContain("## Agent");
+    expect(content).toContain("infra-ops");
+    expect(content).toContain("## Safety");
+    expect(content).toContain("Read-only");
+  });
+
+  it("skill template exists with valid frontmatter", () => {
+    const skillFileContent = fs.readFileSync(skillFile, "utf-8");
+    expect(skillFileContent).toContain("name: performance-profiling");
+    expect(skillFileContent).toContain("description:");
+    expect(skillFileContent).toContain("benchmark");
+    expect(skillFileContent).toContain("## When to Use");
+    expect(skillFileContent).toContain("## Benchmarks");
+    expect(skillFileContent).toContain("## Thresholds");
+    expect(skillFileContent).toContain("## Handoff");
+  });
+
+  it("performance docs exist", () => {
+    expect(exists(docsFile)).toBe(true);
+    const content = fs.readFileSync(docsFile, "utf-8");
+    expect(content).toContain("# OpenCode Performance Baseline");
+    expect(content).toContain("## Benchmark Catalog");
+    expect(content).toContain("## CI Integration");
+    expect(content).toContain("## Thresholds");
+    expect(content).toContain("## Running Benchmarks");
+  });
+
+  it("package.json has perf scripts", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));
+    expect(pkg.scripts.perf).toBeDefined();
+    expect(pkg.scripts["perf:ci"]).toBeDefined();
+    expect(pkg.scripts["perf:compare"]).toBeDefined();
+    expect(pkg.scripts["perf:update"]).toBeDefined();
+  });
+
+  it("CI has performance-smoke job", () => {
+    const ciFile = path.join(ROOT, ".github", "workflows", "ci.yml");
+    if (!exists(ciFile)) return;
+    const content = fs.readFileSync(ciFile, "utf-8");
+    expect(content).toContain("performance-smoke");
+    expect(content).toContain("perf:ci");
+  });
+});

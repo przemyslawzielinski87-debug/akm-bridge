@@ -23,7 +23,12 @@
     "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit",
     "test:observability": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=observability --forceExit",
     "check:mcp-health": "tsx scripts/check-mcp-health.ts",
-    "observability:report": "tsx scripts/opencode-observability-report.ts"
+    "observability:report": "tsx scripts/opencode-observability-report.ts",
+    "perf": "tsx scripts/run-performance-baseline.ts",
+    "perf:ci": "tsx scripts/run-performance-baseline.ts --ci",
+    "perf:compare": "tsx scripts/run-performance-baseline.ts --compare performance/baseline.json",
+    "perf:update": "tsx scripts/run-performance-baseline.ts --update-baseline",
+    "perf:json": "tsx scripts/run-performance-baseline.ts --json"
   },
   "dependencies": {
     "tsx": "^4.22.4"

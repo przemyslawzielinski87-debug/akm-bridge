@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "environment": {
+    "os": "linux",
+    "arch": "x64",
+    "cpuCores": 8,
+    "ramTotal": "15Gi",
+    "bunVersion": "1.3.14",
+    "nodeVersion": "v22.14.0"
+  },
+  "benchmarks": {
+    "startup-tsc": {
+      "id": "startup-tsc",
+      "component": "typescript",
+      "scenario": "tsc --noEmit compile time",
+      "category": "startup",
+      "environment": "server",
+      "runs": 2,
+      "warmupRuns": 1,
+      "medianMs": 4200,
+      "p95Ms": 4300,
+      "minMs": 4100,
+      "maxMs": 4400,
+      "stdDevMs": 100,
+      "cpuUserMs": 3500,
+      "cpuSystemMs": 700,
+      "rssPeakBytes": 268435456,
+      "heapPeakBytes": 134217728,
+      "ioReadBytes": 0,
+      "ioWriteBytes": 0,
+      "errorRate": 0,
+      "status": "pass",
+      "threshold": {
+        "warnPercent": 20,
+        "failPercent": 50,
+        "warnAbsoluteMs": 8000,
+        "failAbsoluteMs": 15000,
+        "warnMemoryBytes": 536870912,
+        "failMemoryBytes": 1073741824
+      },
+      "metadata": {},
+      "measuredAt": "2026-06-07T22:00:00.000Z"
+    },
+    "sqlite-insert-1000": {
+      "id": "sqlite-insert-1000",
+      "component": "sqlite",
+      "scenario": "insert 1000 rows",
+      "category": "sqlite",
+      "environment": "server",
+      "runs": 3,
+      "warmupRuns": 1,
+      "medianMs": 45,
+      "p95Ms": 55,
+      "minMs": 40,
+      "maxMs": 60,
+      "stdDevMs": 8,
+      "cpuUserMs": 30,
+      "cpuSystemMs": 10,
+      "rssPeakBytes": 41943040,
+      "heapPeakBytes": 20971520,
+      "ioReadBytes": 0,
+      "ioWriteBytes": 0,
+      "errorRate": 0,
+      "status": "pass",
+      "threshold": {
+        "warnPercent": 20,
+        "failPercent": 50,
+        "warnAbsoluteMs": 100,
+        "failAbsoluteMs": 300,
+        "warnMemoryBytes": 52428800,
+        "failMemoryBytes": 104857600
+      },
+      "metadata": {},
+      "measuredAt": "2026-06-07T22:00:00.000Z"
+    }
+  },
+  "thresholds": {
+    "latencyRegressionPercent": 20,
+    "memoryRegressionPercent": 20,
+    "startupRegressionPercent": 25,
+    "cpuRegressionPercent": 25,
+    "absoluteLimits": {}
+  },
+  "validatedCommit": "e1ad8d5",
+  "validatedAt": "2026-06-07T22:00:00.000Z"
+}

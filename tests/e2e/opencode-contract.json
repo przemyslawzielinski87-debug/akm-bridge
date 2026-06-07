@@ -118,6 +118,11 @@
       "name": "/projects",
       "agent": "explore",
       "file": "/root/.config/opencode/commands/projects.md"
+    },
+    {
+      "name": "/performance",
+      "agent": "infra-ops",
+      "file": "/root/.config/opencode/commands/performance.md"
     }
   ],
   "skills": [
@@ -204,6 +209,10 @@
     {
       "name": "multi-project-governance",
       "file": "/root/.config/opencode/skills/multi-project-governance/SKILL.md"
+    },
+    {
+      "name": "performance-profiling",
+      "file": "/root/.config/opencode/skills/performance-profiling/SKILL.md"
     }
   ],
   "mcpServers": [
@@ -272,6 +281,7 @@
     "/root/.config/opencode/commands/security-scan.md",
     "/root/.config/opencode/commands/brainstorm.md",
     "/root/.config/opencode/commands/projects.md",
+    "/root/.config/opencode/commands/performance.md",
     "/root/.config/opencode/skills/cloudflare-coolify-routing/SKILL.md",
     "/root/.config/opencode/skills/context-efficiency-audit/SKILL.md",
     "/root/.config/opencode/skills/git-safe-workflow/SKILL.md",
@@ -292,7 +302,8 @@
     "/root/.config/opencode/skills/token-efficient-debug/SKILL.md",
     "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md",
 "/root/.config/opencode/skills/brainstorming/SKILL.md",
-    "/root/.config/opencode/skills/multi-project-governance/SKILL.md"
+"/root/.config/opencode/skills/multi-project-governance/SKILL.md",
+    "/root/.config/opencode/skills/performance-profiling/SKILL.md"
   ],
   "runtimeChecks": [
     {
@@ -305,7 +316,7 @@
     },
     {
       "id": "commands-visible",
-      "description": "All 16 command .md files are present and discoverable in /root/.config/opencode/commands/"
+      "description": "All 17 command .md files are present and discoverable in /root/.config/opencode/commands/"
     },
     {
       "id": "mcp-initialize",
@@ -394,6 +405,26 @@
     {
       "id": "multi-project-no-superpowers",
       "description": "Full Superpowers plugin is not installed; all governance is standalone"
+    },
+    {
+      "id": "performance-command-exists",
+      "description": "/performance command is discoverable with valid markdown frontmatter and infra-ops agent reference"
+    },
+    {
+      "id": "performance-profiling-skill-exists",
+      "description": "performance-profiling skill is discoverable with valid YAML frontmatter"
+    },
+    {
+      "id": "performance-baseline-file",
+      "description": "performance/baseline.json exists with valid schema and thresholds"
+    },
+    {
+      "id": "performance-runner-executable",
+      "description": "scripts/run-performance-baseline.ts exists and is executable via tsx"
+    },
+    {
+      "id": "performance-ci-gate",
+      "description": "CI has a performance-smoke job that runs benchmarks in CI mode"
     }
   ]
 }

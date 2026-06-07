@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "environment": {
+    "os": "linux",
+    "arch": "x64",
+    "cpuCores": 8,
+    "ramTotal": "15Gi",
+    "bunVersion": "unknown",
+    "nodeVersion": "v22.14.0"
+  },
+  "benchmarks": {},
+  "thresholds": {
+    "latencyRegressionPercent": 20,
+    "memoryRegressionPercent": 20,
+    "startupRegressionPercent": 25,
+    "cpuRegressionPercent": 25,
+    "absoluteLimits": {
+      "startup-tsc": { "warnMs": 8000, "failMs": 15000, "warnMemoryMb": 512, "failMemoryMb": 1024 },
+      "startup-tsx-import": { "warnMs": 3000, "failMs": 6000, "warnMemoryMb": 256, "failMemoryMb": 512 },
+      "startup-build": { "warnMs": 15000, "failMs": 30000, "warnMemoryMb": 512, "failMemoryMb": 1024 },
+      "sqlite-insert-1000": { "warnMs": 100, "failMs": 300, "warnMemoryMb": 50, "failMemoryMb": 100 },
+      "sqlite-lookup-indexed": { "warnMs": 200, "failMs": 500, "warnMemoryMb": 50, "failMemoryMb": 100 },
+      "sqlite-concurrent-reads": { "warnMs": 50, "failMs": 150, "warnMemoryMb": 50, "failMemoryMb": 100 },
+      "dashboard-data-import": { "warnMs": 1000, "failMs": 3000, "warnMemoryMb": 256, "failMemoryMb": 512 },
+      "dashboard-e2e-import": { "warnMs": 1000, "failMs": 3000, "warnMemoryMb": 256, "failMemoryMb": 512 },
+      "scheduler-scan-100": { "warnMs": 20, "failMs": 50, "warnMemoryMb": 10, "failMemoryMb": 50 },
+      "scheduler-scan-1000": { "warnMs": 50, "failMs": 150, "warnMemoryMb": 20, "failMemoryMb": 100 },
+      "memory-alloc-1000": { "warnMs": 100, "failMs": 300, "warnMemoryMb": 50, "failMemoryMb": 100 },
+      "memory-gc-leak-check": { "warnMs": 50, "failMs": 100, "warnMemoryMb": 50, "failMemoryMb": 200 },
+      "startup-node-require": { "warnMs": 200, "failMs": 500, "warnMemoryMb": 10, "failMemoryMb": 50 }
+    }
+  },
+  "validatedCommit": "",
+  "validatedAt": ""
+}

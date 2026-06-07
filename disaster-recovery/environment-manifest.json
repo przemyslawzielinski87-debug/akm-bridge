@@ -40,7 +40,7 @@
     "files": []
   },
   "commands": {
-    "count": 21,
+    "count": 22,
     "directory": "/root/.config/opencode/commands",
     "files": [
       "brainstorm.md",
@@ -48,11 +48,12 @@
     ]
   },
   "skills": {
-    "count": 23,
+    "count": 24,
     "directory": "/root/.config/opencode/skills",
     "directories": [
       "brainstorming",
-      "multi-project-governance"
+      "multi-project-governance",
+      "performance-profiling"
     ]
   },
   "mcpServers": {
@@ -120,6 +121,13 @@
     "docs": "docs/OPENCODE-BRAINSTORMING-SKILL.md",
     "template": "docs/examples/skills/brainstorming/SKILL.md"
   },
+  "activePerformancePaths": {
+    "command": "~/.config/opencode/commands/performance.md",
+    "skill": "~/.config/opencode/skills/performance-profiling/SKILL.md",
+    "docs": "docs/OPENCODE-PERFORMANCE-BASELINE.md",
+    "baseline": "performance/baseline.json",
+    "runner": "scripts/run-performance-baseline.ts"
+  },
   "activeMultiProjectPaths": {
     "skill": "~/.config/opencode/skills/multi-project-governance/SKILL.md",
     "command": "~/.config/opencode/commands/projects.md",
@@ -162,6 +170,11 @@
     "multi_project_command_scoping",
     "multi_project_filesystem_isolation",
     "multi_project_budget_enforcement",
-    "multi_project_lock_system"
+    "multi_project_lock_system",
+    "performance_command_exists",
+    "performance_profiling_skill_exists",
+    "performance_baseline_file_exists",
+    "performance_runner_executable",
+    "performance_ci_gate"
   ]
 }
