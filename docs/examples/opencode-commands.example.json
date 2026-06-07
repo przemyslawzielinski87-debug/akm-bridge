@@ -1,0 +1,38 @@
+{
+  "meridian-audit": {
+    "template": "You are running /meridian-audit -- a comprehensive read-only audit of The Meridian project.\n\nRules:\n- DO NOT edit any files.\n- Always use AKM for audit-related knowledge.\n\nSteps:\n1. Determine repository root.\n2. Run: git status, git branch, git log --oneline -5\n3. Search AKM for: \"Meridian audit\", \"WordPress production safety\", \"known regressions\", \"previous incidents\"\n4. Read project structure.\n5. Check for available linters/test runners.\n6. Identify issues without fixing.\n7. Return structured MERIDIAN_AUDIT report.",
+    "description": "Full read-only audit of The Meridian project",
+    "agent": "reviewer",
+    "subtask": true
+  },
+  "meridian-fix": {
+    "template": "You are running /meridian-fix with problem: {{input}}\n\nRules:\n- Do NOT guess root cause.\n- Search AKM first.\n- Gather evidence, then fix minimally.\n- Show diff.\n- Run tests.\n- No deploy/push without explicit command.\n\nReturn MERIDIAN_FIX report.",
+    "description": "Fix problem in The Meridian project",
+    "agent": "akm-build",
+    "subtask": false
+  },
+  "production-check": {
+    "template": "You are running /production-check -- read-only production readiness audit.\n\nRules:\n- Read-only by default.\n- Use AKM for production-safety, Nginx, Cloudflare, Coolify.\n\nChecks: git status, build, tests, env config, Nginx, PHP-FPM, Docker, ports, HTTP, SSL, Cloudflare, error logs, secrets in diff, rollback readiness.\n\nReturn PRODUCTION_CHECK report.",
+    "description": "Read-only production readiness audit",
+    "agent": "infrastructure",
+    "subtask": true
+  },
+  "review": {
+    "template": "You are running /review -- read-only code review.\n\nRules:\n- DO NOT modify files.\n- Analyze git diff for bugs, regressions, security, secrets, unnecessary changes.\n- Run tests without editing.\n\nReturn REVIEW_DECISION report.",
+    "description": "Read-only code review of current git changes",
+    "agent": "reviewer",
+    "subtask": true
+  },
+  "commit-safe": {
+    "template": "You are running /commit-safe -- safe commit workflow.\n\nRules:\n- No git add .\n- No force push.\n- No secrets, backups, .env.\n- Push only with --push.\n- Generate conventional commit message.\n\nSteps: status, diff, tests/lint, secret scan, stage, commit, push(optional).\n\nReturn COMMIT_SAFE report.",
+    "description": "Safe commit with review, tests, optional push",
+    "agent": "akm-build",
+    "subtask": false
+  },
+  "mcp-check": {
+    "template": "You are running /mcp-check -- real MCP functionality test.\n\nRules:\n- Do NOT restart servers.\n- Do NOT modify config.\n- Perform real calls for each MCP.\n\nReturn MCP_CHECK report.",
+    "description": "Real MCP server functionality test",
+    "agent": "infrastructure",
+    "subtask": true
+  }
+}
