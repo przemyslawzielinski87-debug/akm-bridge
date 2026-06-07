@@ -1,0 +1,31 @@
+{
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 20000
+  },
+  "watcher": {
+    "ignore": [
+      "node_modules/**",
+      "vendor/**",
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      ".cache/**",
+      ".tmp/**",
+      "logs/**",
+      "*.log",
+      "*.bak",
+      "*.bak.*",
+      ".git/**",
+      "wp-content/cache/**",
+      "wp-content/uploads/**",
+      "wp-content/upgrade/**",
+      "wp-content/ai1wm-backups/**",
+      "playwright-report/**",
+      "test-results/**",
+      "screenshots/**",
+      "artifacts/**"
+    ]
+  }
+}
