@@ -109,6 +109,7 @@ function requireAuth(req: Request): Session | null {
 /* ── Rate limiter (write ops) ── */
 
 const writeRateLimits = new Map<string, { count: number; resetAt: number }>()
+const notifRateLimits = new Map<string, { count: number; resetAt: number }>()
 
 function isWriteRateLimited(ip: string): boolean {
   const now = Date.now()
@@ -284,7 +285,7 @@ function validateCsrf(req: Request): { valid: boolean; error?: string } {
 const notifHandlers = buildNotificationRoutes({
   manager: notificationManager,
   requireAuth: (req) => requireAuth(req),
-  csrfCheck: (req) => csrfCheck(req),
+  csrfCheck: (req) => validateCsrf(req),
   recordAudit: (action, target, outcome) =>
     store.audit({ action, session_id: undefined, task_id: target, agent: undefined, detail: outcome, ip_address: undefined }),
   isAllowedOrigin: (origin) => isAllowedOrigin(origin ?? undefined),
@@ -292,11 +293,22 @@ const notifHandlers = buildNotificationRoutes({
   corsHeaders: (origin) => corsHeaders(origin ?? null),
   errorResponse: (msg, status, req) => errorResponse(msg, status, req),
   okResponse: (data, req) => okResponse(data, req),
-  rateLimit: (_ip, _key, _limit, _window) => true,
+  rateLimit: (ip: string, key: string, limit: number, windowMs: number) => {
+    const now = Date.now()
+    const mapKey = `${ip}:${key}`
+    const entry = notifRateLimits.get(mapKey)
+    if (!entry || now > entry.resetAt) {
+      notifRateLimits.set(mapKey, { count: 1, resetAt: now + windowMs })
+      return true
+    }
+    entry.count++
+    return entry.count <= limit
+  },
   logRequest: (method, path, status, ip) => logRequest(method, path, status, ip),
 })
 
 const handleGetNotifications = (req: Request, url: URL, ip: string) => notifHandlers.handleGetNotifications(req, url, ip)
+const handleGetOverview = (req: Request, ip: string) => notifHandlers.handleGetOverview(req, ip)
 const handleGetPreferences = (req: Request, ip: string) => notifHandlers.handleGetPreferences(req, ip)
 const handlePutPreferences = (req: Request, ip: string) => notifHandlers.handlePutPreferences(req, ip)
 const handleGetChannels = (req: Request, ip: string) => notifHandlers.handleGetChannels(req, ip)
@@ -593,11 +605,13 @@ const server = Bun.serve({
       const session = requireAuth(req)
       if (!session) return errorResponse('Unauthorized', 401, req)
 
-      // CSRF check
-      const csrf = validateCsrf(req)
-      if (!csrf.valid) {
-        auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
-        return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+      // CSRF check — skip for notification POST paths (handled by notification-api.ts)
+      if (!path.startsWith('/api/notifications/')) {
+        const csrf = validateCsrf(req)
+        if (!csrf.valid) {
+          auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
+          return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+        }
       }
 
       // Rate limit writes
@@ -1027,6 +1041,9 @@ const server = Bun.serve({
     // POST   /api/notifications/:id/acknowledge - acknowledge
     // GET    /api/notifications/status       - full status
 
+    if (method === 'GET' && path === '/api/notifications/overview') {
+      return handleGetOverview(req, ip)
+    }
     if (method === 'GET' && path === '/api/notifications') {
       return handleGetNotifications(req, url, ip)
     }

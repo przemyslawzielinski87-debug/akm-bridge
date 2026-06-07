@@ -36,7 +36,7 @@ export function buildNotificationRoutes(deps: NotificationApiDeps) {
     if (!session) return errorResponse("Unauthorized", 401, req);
     
     const stats = manager.getStats();
-    const channels = manager.getChannelStatus();
+    const channels = await manager.getChannelStatus();
     const recent = manager.list({ limit: 10 });
     
     return okResponse({
@@ -167,14 +167,15 @@ export function buildNotificationRoutes(deps: NotificationApiDeps) {
   }
 
   return {
-    get: {
-      "/api/notifications": handleGetNotifications,
-      "/api/notifications/preferences": handleGetPreferences,
-      "/api/notifications/overview": handleGetOverview
-    },
-    post: {
-      "/api/notifications/preferences": handlePutPreferences
-    }
+    handleGetNotifications,
+    handleGetOverview,
+    handleGetPreferences,
+    handlePutPreferences,
+    handleGetChannels,
+    handlePostTest,
+    handleGetDeliveries,
+    handlePostAcknowledge,
+    handleGetStatus,
   };
 }
 

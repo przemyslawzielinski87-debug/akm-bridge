@@ -1,25 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
-const mockDb = {
-  exec: vi.fn(),
-  prepare: vi.fn(() => ({
-    run: vi.fn(),
-    get: vi.fn(),
-    all: vi.fn(),
-  })),
-};
-
-vi.mock('bun:sqlite', () => ({
-  Database: vi.fn(() => mockDb),
-}));
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function createTaskStore() {
+  const mockDb = {
+    exec: vi.fn().mockImplementation(() => {}),
+    prepare: vi.fn(() => ({
+      run: vi.fn(),
+      get: vi.fn(),
+      all: vi.fn(),
+    })),
+  };
   const db = mockDb;
-  db.exec.mockImplementation(() => {});
   let taskCounter = 0;
 
   return {

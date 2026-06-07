@@ -199,6 +199,7 @@ export class TaskStore {
   // ── Migration ──────────────────────────────────────────────────────────
 
   private migrate() {
+    this.db.exec('CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at TEXT)')
     const currentVersion = this.db
       .query('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1')
       .get() as { version: number } | null

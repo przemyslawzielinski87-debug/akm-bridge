@@ -50,16 +50,24 @@ export class NotificationManager {
     };
   }
 
-  getChannelStatus(): Record<string, ChannelStatus> {
+  async getChannelStatus(): Promise<Record<string, ChannelStatus>> {
     const status: Record<string, ChannelStatus> = {};
     
-    for (const [channel, adapter] of Object.entries(this.adapters)) {
+    const channels: Record<string, { adapter: { health(): Promise<{ ok: boolean; degraded?: boolean }> } | null }> = {
+      dashboard: { adapter: this.dashboard },
+      pwa: { adapter: this.pwa },
+      email: { adapter: this.email },
+      telegram: { adapter: this.telegram },
+      webhook: { adapter: this.webhook },
+    };
+    
+    for (const [channel, { adapter }] of Object.entries(channels)) {
       if (!adapter) {
         status[channel] = { status: 'not_configured' };
         continue;
       }
       
-      const health = adapter.getHealth();
+      const health = await adapter.health();
       status[channel] = {
         status: health.ok ? 'healthy' : 
           health.degraded ? 'degraded' : 'failed',

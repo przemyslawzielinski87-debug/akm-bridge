@@ -27,16 +27,16 @@ type Database = {
 export class NotificationStore {
   getLastSuccess(channel: string): string | undefined {
     const result = this.db.prepare(
-      'SELECT created_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
-    ).get(channel, 'delivered') as { created_at: string } | undefined;
-    return result?.created_at;
+      'SELECT finished_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY finished_at DESC LIMIT 1'
+    ).get(channel, 'delivered') as { finished_at: string } | undefined;
+    return result?.finished_at;
   }
 
   getLastFailure(channel: string): string | undefined {
     const result = this.db.prepare(
-      'SELECT created_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
-    ).get(channel, 'failed') as { created_at: string } | undefined;
-    return result?.created_at;
+      'SELECT finished_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY finished_at DESC LIMIT 1'
+    ).get(channel, 'failed') as { finished_at: string } | undefined;
+    return result?.finished_at;
   }
   private db: Database;
 

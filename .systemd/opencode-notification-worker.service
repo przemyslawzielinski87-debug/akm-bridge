@@ -1,16 +1,17 @@
 [Unit]
 Description=OpenCode Notification Worker
 After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
-User=opencode
+User=root
 WorkingDirectory=/root/projekt/akm-bridge
-ExecStart=/root/.bun/bin/bun run src/notifications/notification-manager.ts
+ExecStart=/root/.bun/bin/bun run src/notifications/worker.ts
+EnvironmentFile=-/root/projekt/akm-bridge/.env.notifications
 Restart=on-failure
-RestartSec=5s
-StartLimitInterval=60s
-StartLimitBurst=3
+RestartSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 UMask=0077

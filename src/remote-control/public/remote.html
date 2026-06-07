@@ -77,6 +77,36 @@ input,select,textarea{font-family:var(--font);font-size:14px}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 
+/* ── Notification sub-tabs ── */
+.notif-panel{display:none}
+.notif-panel.active{display:block}
+.notif-panel .notification-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.notif-panel .stat{border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:12px}
+.notif-panel .stat span{font-weight:600}
+.notif-channel-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.notif-channel-card .ch-name{font-weight:600;font-size:14px;margin-bottom:4px}
+.notif-channel-card .ch-detail{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.notif-channel-card .ch-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;text-transform:capitalize}
+.notif-channel-card .ch-status[data-s="healthy"]{background:var(--green-bg);color:var(--green)}
+.notif-channel-card .ch-status[data-s="degraded"]{background:var(--yellow-bg);color:var(--yellow)}
+.notif-channel-card .ch-status[data-s="failed"]{background:var(--red-bg);color:var(--red)}
+.notif-channel-card .ch-status[data-s="not_configured"]{background:rgba(139,148,158,.15);color:var(--text-muted)}
+.notif-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px;font-size:13px}
+.notif-card .nc-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.notif-card .nc-time{color:var(--text-muted);font-size:11px}
+.notif-card .nc-summary{color:var(--text-secondary);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.notif-card .nc-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.notif-card .nc-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px}
+.notif-card .nc-badge.ch{background:var(--bg-card);border:1px solid var(--border)}
+.notif-card .nc-badge.ok{background:var(--green-bg);color:var(--green)}
+.notif-card .nc-badge.fail{background:var(--red-bg);color:var(--red)}
+.notif-card .nc-badge.pending{background:var(--yellow-bg);color:var(--yellow)}
+.notif-card .nc-badge.ack{background:rgba(139,148,158,.15);color:var(--text-secondary)}
+.notif-card .nc-link{font-size:11px;margin-top:4px}
+.notif-delivery-item{border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;font-size:12px}
+.notif-delivery-item .di-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
+.notif-delivery-item .di-error{color:var(--red);margin-top:4px;font-size:11px}
+
 /* ── Cards ── */
 .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
 .card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
@@ -188,6 +218,10 @@ input,select,textarea{font-family:var(--font);font-size:14px}
   .header h1{font-size:14px}
   .tabs{gap:0}
   .tab{padding:10px 12px;font-size:12px}
+  .notif-panel .notification-stats{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+  .notif-panel .stat{padding:8px;font-size:11px}
+  .filter-bar{gap:4px}
+  .filter-btn{padding:5px 10px;font-size:11px;min-height:36px}
 }
 
 /* ── Login ── */
@@ -237,20 +271,116 @@ input,select,textarea{font-family:var(--font);font-size:14px}
 
   <!-- Content -->
   <div class="content">
-    <div id="notifications" class="tab-content" style="display:none">
-      <div class="notification-overview">
+    <div id="tab-notifications" class="tab-panel">
+      <!-- ── Sub-tabs ── -->
+      <div class="filter-bar" id="notif-subtabs">
+        <button class="filter-btn active" data-notif-tab="overview" onclick="switchNotifTab('overview')">Overview</button>
+        <button class="filter-btn" data-notif-tab="channels" onclick="switchNotifTab('channels')">Channels</button>
+        <button class="filter-btn" data-notif-tab="preferences" onclick="switchNotifTab('preferences')">Preferences</button>
+        <button class="filter-btn" data-notif-tab="recent" onclick="switchNotifTab('recent')">Recent</button>
+        <button class="filter-btn" data-notif-tab="deliveries" onclick="switchNotifTab('deliveries')">Deliveries</button>
+        <button class="filter-btn" data-notif-tab="failed" onclick="switchNotifTab('failed')">Failed</button>
+        <button class="filter-btn" data-notif-tab="digests" onclick="switchNotifTab('digests')">Digests</button>
+        <button class="filter-btn" data-notif-tab="test" onclick="switchNotifTab('test')">Test</button>
+      </div>
+
+      <!-- ── Overview ── -->
+      <div id="notif-overview" class="notif-panel active">
         <div class="notification-stats">
-          <div class="stat">Queued: <span id="notification-queued">0</span></div>
-          <div class="stat">Unread: <span id="notification-unread">0</span></div>
-          <div class="stat">Failed: <span id="notification-failed">0</span></div>
+          <div class="stat">Queued: <span id="nq-queued">-</span></div>
+          <div class="stat">Sent: <span id="nq-sent">-</span></div>
+          <div class="stat">Failed: <span id="nq-failed">-</span></div>
+          <div class="stat">Suppressed: <span id="nq-suppressed">-</span></div>
+          <div class="stat">Expired: <span id="nq-expired">-</span></div>
+          <div class="stat">Deduplicated: <span id="nq-dedup">-</span></div>
+          <div class="stat">Unread: <span id="nq-unread">-</span></div>
+          <div class="stat">Approvals: <span id="nq-approvals">-</span></div>
+          <div class="stat">Last delivery: <span id="nq-last-delivery">-</span></div>
         </div>
-        <div class="notification-channels">
-          <div class="channel-status" data-channel="email">Email: <span class="status">not_configured</span></div>
-          <div class="channel-status" data-channel="telegram">Telegram: <span class="status">not_configured</span></div>
-          <div class="channel-status" data-channel="webhook">Webhook: <span class="status">not_configured</span></div>
+      </div>
+
+      <!-- ── Channels ── -->
+      <div id="notif-channels" class="notif-panel">
+        <div id="notif-channel-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <!-- ── Preferences ── -->
+      <div id="notif-preferences" class="notif-panel">
+        <div class="card">
+          <div class="card-header"><strong>Notification Preferences</strong></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Enabled Channels</label>
+              <div class="toggle-row" id="pref-channels"></div>
+            </div>
+            <div class="form-group">
+              <label>Severity Threshold</label>
+              <select id="pref-severity">
+                <option value="info">Info (all)</option>
+                <option value="warning">Warning+</option>
+                <option value="error">Error only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Quiet Hours</label>
+              <div class="form-row">
+                <div class="form-group"><label>Start</label><input type="time" id="pref-quiet-start" /></div>
+                <div class="form-group"><label>End</label><input type="time" id="pref-quiet-end" /></div>
+              </div>
+              <div class="hint">Notifications suppressed during quiet hours</div>
+            </div>
+            <details style="margin-top:8px">
+              <summary style="cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:500">Event Types</summary>
+              <div style="padding-top:10px" id="pref-events"></div>
+            </details>
+            <details style="margin-top:8px">
+              <summary style="cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:500">Digests</summary>
+              <div style="padding-top:10px">
+                <div class="toggle-row" style="margin-bottom:8px">
+                  <label class="toggle"><input type="checkbox" id="pref-daily-digest" /><span class="slider"></span></label>
+                  <span class="toggle-label">Daily Digest</span>
+                </div>
+                <div class="toggle-row">
+                  <label class="toggle"><input type="checkbox" id="pref-weekly-digest" /><span class="slider"></span></label>
+                  <span class="toggle-label">Weekly Digest</span>
+                </div>
+              </div>
+            </details>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="saveNotificationPreferences()">Save Preferences</button>
+            <div id="pref-save-msg" style="font-size:12px;margin-top:8px;display:none"></div>
+          </div>
         </div>
-        <div class="notification-list">
-          <div class="empty-state">No recent notifications</div>
+      </div>
+
+      <!-- ── Recent ── -->
+      <div id="notif-recent" class="notif-panel">
+        <div id="notif-recent-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <!-- ── Deliveries ── -->
+      <div id="notif-deliveries" class="notif-panel">
+        <div id="notif-deliveries-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <!-- ── Failed ── -->
+      <div id="notif-failed" class="notif-panel">
+        <div id="notif-failed-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <!-- ── Digests ── -->
+      <div id="notif-digests" class="notif-panel">
+        <div id="notif-digests-list"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <!-- ── Test ── -->
+      <div id="notif-test" class="notif-panel">
+        <div class="card">
+          <div class="card-header"><strong>Send Test Notification</strong></div>
+          <div class="card-body">
+            <p style="margin-bottom:12px;color:var(--text-secondary)">Sends a fixed, safe test message to all configured channels. This is rate-limited to 3 requests per minute.</p>
+            <button class="btn btn-primary" id="notif-test-btn" onclick="sendTestNotification()">Send safe test notification</button>
+            <div id="notif-test-result" style="margin-top:12px;display:none"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -661,38 +791,6 @@ input,select,textarea{font-family:var(--font);font-size:14px}
 
   /* ── Tab switching ── */
   window.switchTab = function(name) {
-  if(name === 'notifications') {
-    fetch('/api/notifications/overview')
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('notification-queued').textContent = data.queued;
-        document.getElementById('notification-unread').textContent = data.unread;
-        document.getElementById('notification-failed').textContent = data.failed;
-        
-        document.querySelectorAll('.channel-status').forEach(el => {
-          const channel = el.dataset.channel;
-          const statusEl = el.querySelector('.status');
-          statusEl.textContent = data.channels[channel]?.status || 'not_configured';
-          statusEl.dataset.status = data.channels[channel]?.status || 'not_configured';
-        });
-        
-        const listEl = document.querySelector('.notification-list');
-        if(data.recent.length === 0) {
-          listEl.innerHTML = '<div class="empty-state">No recent notifications</div>';
-        } else {
-          listEl.innerHTML = data.recent.map(notif => `
-            <div class="notification-item">
-              <div class="summary">${notif.summary}</div>
-              <div class="time">${new Date(notif.time).toLocaleString()}</div>
-              <div>
-                <span class="channel">${notif.channel}</span>
-                <span class="status status-${notif.status}">${notif.status}</span>
-              </div>
-            </div>
-          `).join('');
-        }
-      });
-  }
     state.currentTab = name;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
@@ -700,6 +798,7 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     if (name === 'artifacts') loadArtifacts();
     if (name === 'tasks') loadTasks();
     if (name === 'schedules') loadSchedules();
+    if (name === 'notifications') loadNotificationsOverview();
   };
 
   /* ── Tasks ── */
@@ -1257,6 +1356,211 @@ input,select,textarea{font-family:var(--font);font-size:14px}
       errEl.style.display = 'block';
     }
   };
+
+  /* ── Notifications ── */
+  state.notifTab = 'overview';
+
+  window.switchNotifTab = function(tab) {
+    state.notifTab = tab;
+    document.querySelectorAll('#notif-subtabs .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.notifTab === tab));
+    document.querySelectorAll('.notif-panel').forEach(p => p.classList.toggle('active', p.id === 'notif-' + tab));
+    if (tab === 'overview') loadNotificationsOverview();
+    else if (tab === 'channels') loadNotificationChannels();
+    else if (tab === 'preferences') loadNotificationPreferences();
+    else if (tab === 'recent') loadRecentNotifications();
+    else if (tab === 'deliveries') loadNotificationDeliveries();
+    else if (tab === 'failed') loadFailedDeliveries();
+    else if (tab === 'digests') loadDigests();
+  };
+
+  async function loadNotificationsOverview() {
+    try {
+      const data = await apiFetch('/api/notifications/overview');
+      const s = data.stats || data;
+      setText('nq-queued', s.queued ?? '-');
+      setText('nq-sent', s.sent ?? '-');
+      setText('nq-failed', s.failed ?? '-');
+      setText('nq-suppressed', s.suppressed ?? '-');
+      setText('nq-expired', s.expired ?? '-');
+      setText('nq-dedup', s.deduplicated ?? '-');
+      setText('nq-unread', s.unread ?? '-');
+      setText('nq-approvals', s.approval_notifications ?? '-');
+      setText('nq-last-delivery', s.last_delivery ? new Date(s.last_delivery).toLocaleString() : '-');
+      const badge = document.getElementById('notification-count');
+      if (s.unread > 0) { badge.textContent = s.unread; badge.style.display = 'inline'; }
+      else badge.style.display = 'none';
+    } catch {
+      setText('nq-queued', 'err');
+    }
+  }
+
+  async function loadNotificationChannels() {
+    const el = document.getElementById('notif-channel-list');
+    try {
+      const data = await apiFetch('/api/notifications/channels');
+      const channels = data.channels || {};
+      const health = data.health || {};
+      const names = ['dashboard','pwa','email','telegram','webhook'];
+      el.innerHTML = names.map(name => {
+        const ch = channels[name] || {};
+        const h = health[name] || {};
+        const configured = ch.configured ? 'Configured' : 'Not configured';
+        const status = ch.healthy === true ? 'healthy' : ch.healthy === false ? 'failed' : ch.configured ? 'degraded' : 'not_configured';
+        const latency = h.latency ? `${h.latency}ms` : '';
+        const lastOk = h.lastSuccess ? `Last ok: ${new Date(h.lastSuccess).toLocaleString()}` : '';
+        const lastFail = h.lastFailure ? `Last fail: ${h.lastFailure}` : '';
+        return `<div class="notif-channel-card">
+          <div class="ch-name">${escapeHtml(name)} <span class="ch-status" data-s="${status}">${status.replace('_',' ')}</span></div>
+          <div class="ch-detail">${configured}${latency ? ' · ' + latency : ''}</div>
+          ${lastOk ? '<div class="ch-detail">' + escapeHtml(lastOk) + '</div>' : ''}
+          ${lastFail ? '<div class="ch-detail" style="color:var(--red)">' + escapeHtml(lastFail) + '</div>' : ''}
+        </div>`;
+      }).join('');
+    } catch { el.innerHTML = '<div class="empty-state">Failed to load</div>'; }
+  }
+
+  async function loadNotificationPreferences() {
+    try {
+      const data = await apiFetch('/api/notifications/preferences');
+      const p = data.preferences || {};
+      const channels = ['dashboard','pwa','email','telegram','webhook'];
+      document.getElementById('pref-channels').innerHTML = channels.map(ch => {
+        const on = (p.enabled_channels || []).includes(ch);
+        return `<label class="toggle"><input type="checkbox" data-ch="${ch}" ${on?'checked':''} /><span class="slider"></span></label><span class="toggle-label" style="text-transform:capitalize">${ch}</span>`;
+      }).join('');
+      document.getElementById('pref-severity').value = p.severity_threshold || 'info';
+      document.getElementById('pref-quiet-start').value = p.quiet_hours_start || '';
+      document.getElementById('pref-quiet-end').value = p.quiet_hours_end || '';
+      document.getElementById('pref-daily-digest').checked = !!p.daily_digest;
+      document.getElementById('pref-weekly-digest').checked = !!p.weekly_digest;
+      const events = ['approval_notifications','task_completion','task_failure_notifications','recovery_notifications','scheduler_notifications'];
+      document.getElementById('pref-events').innerHTML = events.map(ev => {
+        const label = ev.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+        return `<div class="toggle-row" style="margin-bottom:8px"><label class="toggle"><input type="checkbox" data-event="${ev}" ${p[ev]!==false?'checked':''} /><span class="slider"></span></label><span class="toggle-label">${escapeHtml(label)}</span></div>`;
+      }).join('');
+    } catch {}
+  }
+
+  async function saveNotificationPreferences() {
+    const msgEl = document.getElementById('pref-save-msg');
+    const channels = Array.from(document.querySelectorAll('#pref-channels input[type=checkbox]:checked')).map(el => el.dataset.ch);
+    const events = {};
+    document.querySelectorAll('#pref-events input[type=checkbox]').forEach(el => { events[el.dataset.event] = el.checked; });
+    const prefs = {
+      enabled_channels: channels,
+      severity_threshold: document.getElementById('pref-severity').value,
+      quiet_hours_start: document.getElementById('pref-quiet-start').value || null,
+      quiet_hours_end: document.getElementById('pref-quiet-end').value || null,
+      daily_digest: document.getElementById('pref-daily-digest').checked,
+      weekly_digest: document.getElementById('pref-weekly-digest').checked,
+      ...events,
+    };
+    try {
+      await apiFetch('/api/notifications/preferences', { method: 'PUT', body: JSON.stringify({ preferences: prefs }) });
+      msgEl.textContent = 'Saved';
+      msgEl.style.color = 'var(--green)';
+      msgEl.style.display = 'block';
+      setTimeout(() => msgEl.style.display = 'none', 3000);
+    } catch (e) {
+      msgEl.textContent = 'Failed: ' + e.message;
+      msgEl.style.color = 'var(--red)';
+      msgEl.style.display = 'block';
+    }
+  }
+
+  async function loadRecentNotifications() {
+    const el = document.getElementById('notif-recent-list');
+    try {
+      const data = await apiFetch('/api/notifications?limit=50');
+      const items = data.data || data.notifications || [];
+      if (!items.length) { el.innerHTML = '<div class="empty-state">No notifications</div>'; return; }
+      el.innerHTML = items.map(n => renderNotifCard(n)).join('');
+    } catch { el.innerHTML = '<div class="empty-state">Failed to load</div>'; }
+  }
+
+  async function loadNotificationDeliveries() {
+    const el = document.getElementById('notif-deliveries-list');
+    try {
+      const data = await apiFetch('/api/notifications/deliveries');
+      const items = data.deliveries || [];
+      if (!items.length) { el.innerHTML = '<div class="empty-state">No deliveries</div>'; return; }
+      el.innerHTML = items.map(d => {
+        const statusCls = d.status === 'delivered' ? 'ok' : d.status === 'failed' ? 'fail' : 'pending';
+        return `<div class="notif-delivery-item">
+          <div class="di-header"><span class="nc-badge ${statusCls}">${escapeHtml(d.status||'pending')}</span> <span class="nc-badge ch">${escapeHtml(d.channel||'')}</span> <span class="nc-time">${d.delivered_at ? new Date(d.delivered_at).toLocaleString() : ''}</span></div>
+          ${d.error_category ? '<div class="di-error">Category: ' + escapeHtml(d.error_category) + '</div>' : ''}
+        </div>`;
+      }).join('');
+    } catch { el.innerHTML = '<div class="empty-state">Failed to load</div>'; }
+  }
+
+  async function loadFailedDeliveries() {
+    const el = document.getElementById('notif-failed-list');
+    try {
+      const data = await apiFetch('/api/notifications/deliveries');
+      const items = (data.deliveries || []).filter(d => d.status === 'failed');
+      if (!items.length) { el.innerHTML = '<div class="empty-state">No failed deliveries</div>'; return; }
+      el.innerHTML = items.map(d => {
+        return `<div class="notif-delivery-item">
+          <div class="di-header"><span class="nc-badge fail">failed</span> <span class="nc-badge ch">${escapeHtml(d.channel||'')}</span> <span class="nc-time">${d.delivered_at ? new Date(d.delivered_at).toLocaleString() : ''}</span></div>
+          ${d.error_category ? '<div class="di-error">Category: ' + escapeHtml(d.error_category) + '</div>' : ''}
+        </div>`;
+      }).join('');
+    } catch { el.innerHTML = '<div class="empty-state">Failed to load</div>'; }
+  }
+
+  async function loadDigests() {
+    const el = document.getElementById('notif-digests-list');
+    el.innerHTML = '<div class="empty-state">Digest preview available when daily/weekly digest is enabled in Preferences</div>';
+  }
+
+  async function sendTestNotification() {
+    const btn = document.getElementById('notif-test-btn');
+    const resultEl = document.getElementById('notif-test-result');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    resultEl.style.display = 'none';
+    try {
+      const data = await apiFetch('/api/notifications/test', { method: 'POST' });
+      let html = '<div class="card"><div class="card-body">';
+      html += `<p style="color:var(--green);margin-bottom:8px">Queued: ${data.queued ?? 0}</p>`;
+      if (data.suppressed && data.suppressed.length) {
+        html += '<p style="color:var(--yellow)">Suppressed:</p><ul style="margin:4px 0 0 16px;font-size:12px">';
+        data.suppressed.forEach(s => { html += `<li>${escapeHtml(s.reason || s.severity || 'suppressed')}</li>`; });
+        html += '</ul>';
+      }
+      html += '</div></div>';
+      resultEl.innerHTML = html;
+      resultEl.style.display = 'block';
+    } catch (e) {
+      resultEl.innerHTML = '<div style="color:var(--red);font-size:12px">Failed: ' + escapeHtml(e.message) + '</div>';
+      resultEl.style.display = 'block';
+    } finally {
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Send safe test notification'; }, 10000);
+    }
+  }
+
+  function renderNotifCard(n) {
+    const time = n.created_at || n.time;
+    const timeStr = time ? new Date(time).toLocaleString() : '';
+    const sevCls = n.severity === 'error' ? 'fail' : n.severity === 'warning' ? 'pending' : 'ok';
+    const acked = n.acknowledged ? ' <span class="nc-badge ack">ack</span>' : '';
+    return `<div class="notif-card">
+      <div class="nc-header">
+        <span class="nc-badge ${sevCls}">${escapeHtml(n.severity || n.type || 'info')}</span>
+        <span class="nc-time">${escapeHtml(timeStr)}</span>
+        ${acked}
+      </div>
+      <div class="nc-summary">${escapeHtml(n.safe_summary || n.summary || '')}</div>
+      <div class="nc-meta">
+        ${(n.channels || [n.channel]).map(ch => '<span class="nc-badge ch">' + escapeHtml(ch || '') + '</span>').join('')}
+        <span class="nc-badge ${n.status === 'delivered' ? 'ok' : n.status === 'failed' ? 'fail' : 'pending'}">${escapeHtml(n.status || 'pending')}</span>
+      </div>
+      ${n.approval_id ? '<div class="nc-link">Approval: ' + escapeHtml(n.approval_id.slice(0, 8)) + '</div>' : ''}
+    </div>`;
+  }
+
+  function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
   /* ── Auto-refresh ── */
   function startAutoRefresh() {
