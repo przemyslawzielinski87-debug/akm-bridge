@@ -21,31 +21,43 @@ akm_status() {
 disk_log_warn() {
   local usage
   usage=$(journalctl --disk-usage 2>/dev/null | grep -oP '[\d.]+(?=G)' || echo "0")
-  if (( $(echo "$usage > 2" | bc -l 2>/dev/null || echo 0) )); then
-    echo "warning: journal $usage G"
+  if command -v bc &>/dev/null; then
+    if (( $(echo "$usage > 2" | bc -l 2>/dev/null || echo 0) )); then
+      echo "warning: journal ${usage}G"
+      return
+    fi
   fi
+  echo "none"
 }
 
 http_success() {
   local url="${1:-http://127.0.0.1:4097/health}"
-  curl -sf -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
+  if command -v curl &>/dev/null; then
+    curl -sf -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000"
+  else
+    echo "-1"
+  fi
 }
 
 main() {
-  local oc=$(opencode_status)
-  local akm=$(akm_status)
-  local disk=$(disk_log_warn)
-  local http=$(http_success)
+  local oc
+  oc=$(opencode_status)
+  local akm
+  akm=$(akm_status)
+  local disk
+  disk=$(disk_log_warn)
+  local http
+  http=$(http_success)
 
   cat <<JSON
 {
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%S 2>/dev/null || echo "unknown")",
   "component": "health-check",
   "event": "system_health",
   "opencode": "$oc",
   "akm": "$akm",
   "http_health_endpoint": $http,
-  "disk_warning": "${disk:-none}"
+  "disk_warning": "$disk"
 }
 JSON
 
