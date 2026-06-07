@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Controlled AKM v0.8.1 adapter \u2014 OpenCode MCP tools + local HTTP API",
+  "description": "Controlled AKM v0.8.1 adapter — OpenCode MCP tools + local HTTP API",
   "scripts": {
     "build": "tsc",
     "start": "node dist/mcp-server.js",
@@ -28,6 +28,7 @@
     "@types/node": "^22.19.20",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
   }
 }

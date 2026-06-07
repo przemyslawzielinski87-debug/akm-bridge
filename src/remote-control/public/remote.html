@@ -206,6 +206,7 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     <button class="tab" data-tab="approvals" onclick="switchTab('approvals')">Approvals <span id="approval-count" class="badge" style="display:none">0</span></button>
     <button class="tab" data-tab="activity" onclick="switchTab('activity')">Activity</button>
     <button class="tab" data-tab="artifacts" onclick="switchTab('artifacts')">Artifacts</button>
+    <button class="tab" data-tab="schedules" onclick="switchTab('schedules')">Schedules</button>
   </div>
 
   <!-- Content -->
@@ -330,7 +331,198 @@ input,select,textarea{font-family:var(--font);font-size:14px}
         <div class="empty-state"><p>Select a task to view artifacts</p></div>
       </div>
     </div>
-  </div>
+
+    <!-- ── Schedules Tab ── -->
+    <div id="tab-schedules" class="tab-panel">
+      <div class="filter-bar">
+        <button class="filter-btn active" data-sfilter="all" onclick="filterSchedules('all')">All</button>
+        <button class="filter-btn" data-sfilter="active" onclick="filterSchedules('active')">Active</button>
+        <button class="filter-btn" data-sfilter="paused" onclick="filterSchedules('paused')">Paused</button>
+      </div>
+      <div id="schedule-list">
+        <div class="empty-state"><p>Loading schedules...</p></div>
+      </div>
+      <button class="btn btn-primary" style="position:fixed;bottom:20px;right:20px;border-radius:50%;width:56px;height:56px;font-size:24px;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4)" onclick="showNewScheduleForm()" title="New Schedule">+</button>
+    </div>
+
+    <!-- ── New Schedule Modal ── -->
+    <div id="schedule-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:250;overflow-y:auto">
+      <div style="max-width:520px;margin:40px auto;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:relative">
+        <button onclick="closeScheduleModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">&times;</button>
+        <h3 style="margin-bottom:16px;font-size:16px">New Schedule</h3>
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" id="sch-name" placeholder="e.g. Daily Health Check" />
+        </div>
+        <div class="form-group">
+          <label>Project *</label>
+          <select id="sch-project"><option value="">Loading...</option></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Agent (optional)</label>
+            <select id="sch-agent">
+              <option value="">Default</option>
+              <option value="akm-build">akm-build</option>
+              <option value="meridian-dev">meridian-dev</option>
+              <option value="infra-ops">infra-ops</option>
+              <option value="reviewer">reviewer</option>
+              <option value="security-auditor">security-auditor</option>
+              <option value="release-manager">release-manager</option>
+              <option value="researcher">researcher</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Command (optional)</label>
+            <select id="sch-command">
+              <option value="">None</option>
+              <option value="read">read</option>
+              <option value="write">write</option>
+              <option value="edit">edit</option>
+              <option value="search">search</option>
+              <option value="execute">execute</option>
+              <option value="review">review</option>
+              <option value="deploy">deploy</option>
+              <option value="test">test</option>
+              <option value="build">build</option>
+              <option value="analyze">analyze</option>
+              <option value="research">research</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Prompt Template *</label>
+          <textarea id="sch-prompt" placeholder="Describe what the schedule should do..." style="min-height:80px"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Schedule Type *</label>
+            <select id="sch-type" onchange="updateScheduleExprHint()">
+              <option value="once">Once</option>
+              <option value="interval">Interval</option>
+              <option value="cron" selected>Cron</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Timezone</label>
+            <select id="sch-tz">
+              <option value="Europe/Warsaw" selected>Europe/Warsaw</option>
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="Europe/London">Europe/London</option>
+              <option value="Asia/Tokyo">Asia/Tokyo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Schedule Expression *</label>
+          <input type="text" id="sch-expr" placeholder="0 6 * * *" />
+          <div class="hint" id="sch-expr-hint">Cron: minute hour day month weekday (e.g. 0 6 * * *)</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Approval Policy</label>
+            <select id="sch-approval">
+              <option value="never_write" selected>Never Write (read-only)</option>
+              <option value="per_run">Per Run</option>
+              <option value="preapproved_limited">Pre-approved Limited</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="sch-priority">
+              <option value="low">Low</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="toggle-row">
+            <label class="toggle"><input type="checkbox" id="sch-readonly" checked /><span class="slider"></span></label>
+            <span class="toggle-label">Read-only</span>
+          </div>
+        </div>
+
+        <!-- Advanced: Budget -->
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:500">Budget Limits</summary>
+          <div style="padding-top:10px">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Max Duration (s)</label>
+                <input type="number" id="sch-max-dur" value="300" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Max Runs/Day</label>
+                <input type="number" id="sch-max-runs" value="10" min="0" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Max Input Tokens</label>
+                <input type="number" id="sch-max-in" value="50000" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Max Output Tokens</label>
+                <input type="number" id="sch-max-out" value="10000" min="0" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Max Tool Calls</label>
+                <input type="number" id="sch-max-tools" value="20" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Max Cost ($)</label>
+                <input type="number" id="sch-max-cost" value="1.0" min="0" step="0.1" />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Advanced: Retry & Policies -->
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:500">Retry & Policies</summary>
+          <div style="padding-top:10px">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Retry Max Attempts</label>
+                <input type="number" id="sch-retry" value="0" min="0" max="5" />
+              </div>
+              <div class="form-group">
+                <label>Misfire Policy</label>
+                <select id="sch-misfire">
+                  <option value="skip" selected>Skip</option>
+                  <option value="run_once">Run Once</option>
+                  <option value="catch_up_limited">Catch-up Limited</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Concurrency Policy</label>
+                <select id="sch-concurrency">
+                  <option value="skip" selected>Skip</option>
+                  <option value="queue">Queue</option>
+                  <option value="replace">Replace (read-only)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Maintenance Window</label>
+                <div class="form-row">
+                  <input type="time" id="sch-maint-start" placeholder="Start" style="flex:1" />
+                  <input type="time" id="sch-maint-end" placeholder="End" style="flex:1" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div id="sch-submit-error" style="color:var(--red);font-size:12px;margin-top:10px;display:none"></div>
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="submitSchedule()">Create Schedule</button>
+      </div>
+    </div>
 </div>
 
 <!-- Toast notification -->
@@ -432,6 +624,7 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     if (name === 'approvals') loadApprovals();
     if (name === 'artifacts') loadArtifacts();
     if (name === 'tasks') loadTasks();
+    if (name === 'schedules') loadSchedules();
   };
 
   /* ── Tasks ── */
@@ -778,6 +971,217 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     el.className = 'toast toast-' + type + ' show';
     setTimeout(() => el.classList.remove('show'), 3000);
   }
+
+  /* ── Schedules ── */
+  state.schedules = [];
+  state.scheduleFilter = 'all';
+
+  window.filterSchedules = function(filter) {
+    state.scheduleFilter = filter;
+    document.querySelectorAll('.filter-btn[data-sfilter]').forEach(b => b.classList.toggle('active', b.dataset.sfilter === filter));
+    loadSchedules();
+  };
+
+  async function loadSchedules() {
+    try {
+      const params = new URLSearchParams();
+      if (state.scheduleFilter !== 'all') params.set('status', state.scheduleFilter);
+      params.set('limit', '100');
+      const res = await apiFetch('/api/schedules?' + params.toString());
+      state.schedules = res.data || [];
+      renderSchedules();
+    } catch (e) {
+      document.getElementById('schedule-list').innerHTML = '<div class="empty-state"><p>Failed to load schedules</p></div>';
+    }
+  }
+
+  function renderSchedules() {
+    const el = document.getElementById('schedule-list');
+    if (!state.schedules.length) {
+      el.innerHTML = '<div class="empty-state"><p>No schedules found</p></div>';
+      return;
+    }
+    el.innerHTML = state.schedules.map(s => {
+      const typeLabel = s.schedule_type === 'cron' ? 'Cron' : s.schedule_type === 'interval' ? 'Interval' : 'Once';
+      const nextRun = s.next_run_at ? new Date(s.next_run_at).toLocaleString() : '-';
+      return `
+        <div class="card" onclick="toggleScheduleDetail('${s.id}')">
+          <div class="card-header">
+            <span class="task-status ${s.status === 'active' ? 'completed' : 'paused'}">${s.status}</span>
+            <span style="font-weight:500;font-size:13px">${escapeHtml(s.name)}</span>
+            ${s.read_only ? '<span style="font-size:10px;padding:2px 6px;border-radius:8px;background:rgba(139,148,158,.15);color:var(--text-secondary)">read-only</span>' : ''}
+          </div>
+          <div class="task-meta">
+            <span>📁 ${escapeHtml(s.project.split('/').pop())}</span>
+            ${s.agent ? `<span>🤖 ${escapeHtml(s.agent)}</span>` : ''}
+            <span>⏱ ${typeLabel}</span>
+            <span>⏭ ${nextRun}</span>
+            <span>🔄 ${s.runs_today} runs today</span>
+          </div>
+          <div class="task-detail" id="sdetail-${s.id}">
+            <div style="margin-bottom:8px"><strong>Expression:</strong> <code style="font-size:11px">${escapeHtml(s.schedule_expression)}</code></div>
+            <div style="margin-bottom:8px"><strong>Timezone:</strong> ${escapeHtml(s.timezone)}</div>
+            <div style="margin-bottom:8px"><strong>Approval:</strong> ${escapeHtml(s.approval_policy)}</div>
+            <div style="margin-bottom:8px"><strong>Priority:</strong> ${escapeHtml(s.priority)}</div>
+            <div style="margin-bottom:8px"><strong>Prompt:</strong> <span style="color:var(--text-secondary)">${escapeHtml(s.prompt_template.slice(0, 120))}${s.prompt_template.length > 120 ? '...' : ''}</span></div>
+            <div style="margin-bottom:8px;font-size:12px;color:var(--text-muted)">Created by ${escapeHtml(s.created_by)} on ${new Date(s.created_at).toLocaleDateString()}</div>
+            <div class="card-footer">
+              ${s.status === 'active' ? `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();pauseSchedule('${s.id}')">Pause</button>` : ''}
+              ${s.status === 'paused' ? `<button class="btn btn-sm btn-outline" style="color:var(--green);border-color:var(--green)" onclick="event.stopPropagation();resumeSchedule('${s.id}')">Resume</button>` : ''}
+              <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();runScheduleNow('${s.id}')">Run Now</button>
+              <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();deleteSchedule('${s.id}')" style="color:var(--red);border-color:var(--red)">Delete</button>
+            </div>
+            <div id="shistory-${s.id}" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:none"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window.toggleScheduleDetail = function(id) {
+    const el = document.getElementById('sdetail-' + id);
+    if (el) {
+      el.classList.toggle('open');
+      if (el.classList.contains('open')) loadScheduleHistory(id);
+    }
+  };
+
+  async function loadScheduleHistory(id) {
+    const histEl = document.getElementById('shistory-' + id);
+    if (!histEl) return;
+    histEl.style.display = 'block';
+    histEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Loading history...</div>';
+    try {
+      const res = await apiFetch('/api/schedules/' + id + '/history?limit=5');
+      const runs = res.data || [];
+      if (!runs.length) {
+        histEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">No execution history</div>';
+        return;
+      }
+      histEl.innerHTML = '<div style="font-size:12px;font-weight:500;margin-bottom:4px">Recent Runs</div>' +
+        runs.map(r => `<div style="font-size:11px;color:var(--text-secondary);padding:2px 0"><span class="task-status ${r.status === 'success' ? 'completed' : r.status === 'failed' ? 'failed' : 'queued'}" style="font-size:10px">${r.status}</span> ${new Date(r.started_at).toLocaleString()} ${r.duration_ms ? r.duration_ms + 'ms' : ''}</div>`).join('');
+    } catch {
+      histEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Failed to load history</div>';
+    }
+  }
+
+  window.pauseSchedule = async function(id) {
+    try {
+      await apiFetch('/api/schedules/' + id + '/pause', { method: 'POST' });
+      toast('Schedule paused', 'success');
+      loadSchedules();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.resumeSchedule = async function(id) {
+    try {
+      await apiFetch('/api/schedules/' + id + '/resume', { method: 'POST' });
+      toast('Schedule resumed', 'success');
+      loadSchedules();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.runScheduleNow = async function(id) {
+    try {
+      const res = await apiFetch('/api/schedules/' + id + '/run-now', { method: 'POST' });
+      if (res.data && res.data.queued) {
+        toast('Execution queued', 'success');
+      } else {
+        toast(res.data?.reason || 'Not queued', 'error');
+      }
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.deleteSchedule = async function(id) {
+    if (!confirm('Delete this schedule?')) return;
+    try {
+      await apiFetch('/api/schedules/' + id, { method: 'DELETE' });
+      toast('Schedule deleted', 'success');
+      loadSchedules();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+    }
+  };
+
+  window.showNewScheduleForm = function() {
+    document.getElementById('schedule-modal').style.display = 'block';
+  };
+
+  window.closeScheduleModal = function() {
+    document.getElementById('schedule-modal').style.display = 'none';
+    document.getElementById('sch-submit-error').style.display = 'none';
+  };
+
+  window.updateScheduleExprHint = function() {
+    const type = document.getElementById('sch-type').value;
+    const hint = document.getElementById('sch-expr-hint');
+    const expr = document.getElementById('sch-expr');
+    if (type === 'cron') {
+      hint.textContent = 'Cron: minute hour day month weekday (e.g. 0 6 * * *)';
+      expr.placeholder = '0 6 * * *';
+    } else if (type === 'interval') {
+      hint.textContent = 'Interval: value + unit (e.g. 30m, 2h, 1d)';
+      expr.placeholder = '1h';
+    } else {
+      hint.textContent = 'Once: ISO 8601 timestamp (e.g. 2026-01-15T10:00:00+01:00)';
+      expr.placeholder = '2026-01-15T10:00:00+01:00';
+    }
+  };
+
+  window.submitSchedule = async function() {
+    const errEl = document.getElementById('sch-submit-error');
+    errEl.style.display = 'none';
+    const name = document.getElementById('sch-name').value.trim();
+    const project = document.getElementById('sch-project').value;
+    const prompt = document.getElementById('sch-prompt').value.trim();
+    const type = document.getElementById('sch-type').value;
+    const expr = document.getElementById('sch-expr').value.trim();
+    if (!name) { errEl.textContent = 'Name is required'; errEl.style.display = 'block'; return; }
+    if (!project) { errEl.textContent = 'Project is required'; errEl.style.display = 'block'; return; }
+    if (!prompt) { errEl.textContent = 'Prompt is required'; errEl.style.display = 'block'; return; }
+    if (!expr) { errEl.textContent = 'Schedule expression is required'; errEl.style.display = 'block'; return; }
+
+    const body = {
+      name, project, prompt_template: prompt,
+      schedule_type: type, schedule_expression: expr,
+      agent: document.getElementById('sch-agent').value || undefined,
+      command: document.getElementById('sch-command').value || undefined,
+      timezone: document.getElementById('sch-tz').value,
+      read_only: document.getElementById('sch-readonly').checked,
+      approval_policy: document.getElementById('sch-approval').value,
+      priority: document.getElementById('sch-priority').value,
+      max_duration_seconds: parseInt(document.getElementById('sch-max-dur').value) || 300,
+      max_input_tokens: parseInt(document.getElementById('sch-max-in').value) || 50000,
+      max_output_tokens: parseInt(document.getElementById('sch-max-out').value) || 10000,
+      max_tool_calls: parseInt(document.getElementById('sch-max-tools').value) || 20,
+      max_runs_per_day: parseInt(document.getElementById('sch-max-runs').value) || 10,
+      max_cost_estimate: parseFloat(document.getElementById('sch-max-cost').value) || 1.0,
+      retry_max_attempts: parseInt(document.getElementById('sch-retry').value) || 0,
+      misfire_policy: document.getElementById('sch-misfire').value,
+      concurrency_policy: document.getElementById('sch-concurrency').value,
+      maintenance_window_start: document.getElementById('sch-maint-start').value || undefined,
+      maintenance_window_end: document.getElementById('sch-maint-end').value || undefined,
+    };
+
+    try {
+      await apiFetch('/api/schedules', { method: 'POST', body: JSON.stringify(body) });
+      toast('Schedule created', 'success');
+      closeScheduleModal();
+      loadSchedules();
+      // Reset form
+      document.getElementById('sch-name').value = '';
+      document.getElementById('sch-prompt').value = '';
+      document.getElementById('sch-expr').value = '';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    }
+  };
 
   /* ── Auto-refresh ── */
   function startAutoRefresh() {

@@ -1,0 +1,26 @@
+[Unit]
+Description=OpenCode Scheduler Engine
+After=network.target opencode.service akm-bridge.service opencode-dashboard.service
+
+[Service]
+Type=simple
+ExecStart=/root/.bun/bin/bun run /root/projekt/akm-bridge/src/scheduler/scheduler-engine.ts
+WorkingDirectory=/root/projekt/akm-bridge
+Restart=on-failure
+RestartSec=10
+User=root
+Environment=SCHEDULER_PORT=4202
+Environment=SCHEDULER_HOST=127.0.0.1
+Environment=TICK_INTERVAL=30
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/root/.config/opencode /root/.local/state /root/projekt/akm-bridge /root/.local/share/opencode
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

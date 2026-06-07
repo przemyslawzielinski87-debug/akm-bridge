@@ -173,7 +173,7 @@ function corsHeaders(origin: string | undefined): Record<string, string> {
   if (!origin || !isAllowedOrigin(origin)) return {}
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-CSRF-Token, X-Idempotency-Key',
     'Access-Control-Max-Age': '86400',
   }
@@ -727,6 +727,255 @@ const server = Bun.serve({
         } catch (err: any) {
           return errorResponse(err.message, 400, req)
         }
+      }
+    }
+
+    // ── Schedule Routes ──────────────────────────────────────────────────────────
+    // GET    /api/schedules                  - list schedules (paginated, filtered)
+    // POST   /api/schedules                  - create schedule
+    // GET    /api/schedules/:id              - get schedule details
+    // PUT    /api/schedules/:id              - update schedule
+    // DELETE /api/schedules/:id              - soft-delete schedule
+    // POST   /api/schedules/:id/pause        - pause schedule
+    // POST   /api/schedules/:id/resume       - resume schedule
+    // POST   /api/schedules/:id/run-now      - trigger immediate execution
+    // GET    /api/schedules/:id/history      - execution history
+    // GET    /api/scheduler/status           - scheduler engine status
+
+    // ── Schedule: GET list / scheduler status ──
+
+    if (method === 'GET') {
+      // Scheduler engine status
+      if (path === '/api/scheduler/status') {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        logRequest(method, path, 200, ip)
+        return json({
+          ok: true,
+          data: {
+            running: true,
+            uptime: process.uptime(),
+            tickInterval: parseInt(process.env.TICK_INTERVAL ?? '30'),
+            timestamp: new Date().toISOString(),
+          },
+        }, 200, req)
+      }
+
+      // List schedules (paginated, filtered)
+      if (path === '/api/schedules') {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const status = url.searchParams.get('status') ?? undefined
+        const project = url.searchParams.get('project') ?? undefined
+        const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '50'), 200)
+        const offset = parseInt(url.searchParams.get('offset') ?? '0')
+        try {
+          const { listSchedules } = await import('../scheduler/schedule-api.js')
+          const schedules = listSchedules({ status, project, limit, offset })
+          logRequest(method, path, 200, ip)
+          return json({ ok: true, data: schedules, limit, offset }, 200, req)
+        } catch (err: any) {
+          logRequest(method, path, 500, ip)
+          return errorResponse(err.message ?? 'Failed to list schedules', 500, req)
+        }
+      }
+
+      // Get schedule details
+      if (path.match(/^\/api\/schemas\/[^/]+$/) || path.match(/^\/api\/schedules\/[^/]+$/)) {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const scheduleId = path.split('/')[3]
+        try {
+          const { getSchedule } = await import('../scheduler/schedule-api.js')
+          const schedule = getSchedule(scheduleId)
+          if (!schedule) return errorResponse('Schedule not found', 404, req)
+          logRequest(method, path, 200, ip)
+          return json({ ok: true, data: schedule }, 200, req)
+        } catch (err: any) {
+          logRequest(method, path, 500, ip)
+          return errorResponse(err.message ?? 'Failed to get schedule', 500, req)
+        }
+      }
+
+      // Schedule execution history
+      if (path.match(/^\/api\/schedules\/[^/]+\/history$/)) {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const scheduleId = path.split('/')[3]
+        const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100)
+        try {
+          const { getHistory } = await import('../scheduler/schedule-api.js')
+          const history = getHistory(scheduleId, limit)
+          logRequest(method, path, 200, ip)
+          return json({ ok: true, data: history }, 200, req)
+        } catch (err: any) {
+          logRequest(method, path, 500, ip)
+          return errorResponse(err.message ?? 'Failed to get history', 500, req)
+        }
+      }
+    }
+
+    // ── Schedule: POST create ──
+
+    if (method === 'POST' && path === '/api/schedules') {
+      const session = requireAuth(req)
+      if (!session) return errorResponse('Unauthorized', 401, req)
+
+      const csrf = validateCsrf(req)
+      if (!csrf.valid) {
+        auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
+        return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+      }
+      if (isWriteRateLimited(ip)) {
+        return errorResponse('Rate limit exceeded', 429, req)
+      }
+
+      try {
+        const body = (await req.json()) as Record<string, unknown>
+        const { createSchedule } = await import('../scheduler/schedule-api.js')
+        const result = createSchedule({
+          name: String(body.name ?? ''),
+          project: String(body.project ?? ''),
+          agent: body.agent ? String(body.agent) : undefined,
+          command: body.command ? String(body.command) : undefined,
+          prompt_template: String(body.prompt_template ?? ''),
+          schedule_type: body.schedule_type as 'once' | 'interval' | 'cron',
+          schedule_expression: String(body.schedule_expression ?? ''),
+          timezone: String(body.timezone ?? 'Europe/Warsaw'),
+          read_only: body.read_only !== false,
+          approval_policy: body.approval_policy as string ?? 'never_write',
+          priority: body.priority as string ?? 'normal',
+          max_duration_seconds: body.max_duration_seconds as number,
+          max_input_tokens: body.max_input_tokens as number,
+          max_output_tokens: body.max_output_tokens as number,
+          max_tool_calls: body.max_tool_calls as number,
+          max_runs_per_day: body.max_runs_per_day as number,
+          max_cost_estimate: body.max_cost_estimate as number,
+          retry_max_attempts: body.retry_max_attempts as number,
+          retry_on: body.retry_on as string[],
+          misfire_policy: body.misfire_policy as string ?? 'skip',
+          concurrency_policy: body.concurrency_policy as string ?? 'skip',
+          maintenance_window_start: body.maintenance_window_start ? String(body.maintenance_window_start) : undefined,
+          maintenance_window_end: body.maintenance_window_end ? String(body.maintenance_window_end) : undefined,
+          created_by: session.userId,
+        })
+
+        if (result.errors.length) {
+          return errorResponse(`Validation: ${result.errors.join('; ')}`, 400, req)
+        }
+
+        auditLog('schedule_created', session, `Schedule: ${result.schedule.name}`, result.schedule.id, ip)
+        broadcastGlobal('schedule_created', { scheduleId: result.schedule.id, name: result.schedule.name })
+        logRequest(method, path, 201, ip)
+        return json({ ok: true, data: result.schedule }, 201, req)
+      } catch (err: any) {
+        return errorResponse(err.message ?? 'Failed to create schedule', 400, req)
+      }
+    }
+
+    // ── Schedule: POST actions (pause/resume/run-now) ──
+
+    if (method === 'POST' && path.match(/^\/api\/schedules\/[^/]+\/(pause|resume|run-now)$/)) {
+      const session = requireAuth(req)
+      if (!session) return errorResponse('Unauthorized', 401, req)
+
+      const csrf = validateCsrf(req)
+      if (!csrf.valid) {
+        auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
+        return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+      }
+      if (isWriteRateLimited(ip)) {
+        return errorResponse('Rate limit exceeded', 429, req)
+      }
+
+      const scheduleId = path.split('/')[3]
+      const action = path.split('/')[4] as 'pause' | 'resume' | 'run-now'
+
+      try {
+        const { pauseSchedule, resumeSchedule, runNow } = await import('../scheduler/schedule-api.js')
+        let result: unknown
+
+        if (action === 'pause') {
+          result = pauseSchedule(scheduleId)
+        } else if (action === 'resume') {
+          result = resumeSchedule(scheduleId)
+        } else if (action === 'run-now') {
+          result = runNow(scheduleId)
+        }
+
+        auditLog(`schedule_${action.replace('-', '_')}`, session, `Schedule: ${scheduleId}`, scheduleId, ip)
+        broadcastGlobal(`schedule_${action.replace('-', '_')}`, { scheduleId })
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, data: result }, 200, req)
+      } catch (err: any) {
+        return errorResponse(err.message ?? `Failed to ${action} schedule`, 400, req)
+      }
+    }
+
+    // ── Schedule: PUT update ──
+
+    if (method === 'PUT' && path.match(/^\/api\/schedules\/[^/]+$/)) {
+      const session = requireAuth(req)
+      if (!session) return errorResponse('Unauthorized', 401, req)
+
+      const csrf = validateCsrf(req)
+      if (!csrf.valid) {
+        auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
+        return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+      }
+      if (isWriteRateLimited(ip)) {
+        return errorResponse('Rate limit exceeded', 429, req)
+      }
+
+      const scheduleId = path.split('/')[3]
+      try {
+        const body = (await req.json()) as Record<string, unknown>
+        const { updateSchedule } = await import('../scheduler/schedule-api.js')
+        const result = updateSchedule(scheduleId, body as any)
+
+        if (result.errors.length) {
+          return errorResponse(`Validation: ${result.errors.join('; ')}`, 400, req)
+        }
+        if (!result.schedule) {
+          return errorResponse('Schedule not found', 404, req)
+        }
+
+        auditLog('schedule_updated', session, `Schedule: ${scheduleId}`, scheduleId, ip)
+        broadcastGlobal('schedule_updated', { scheduleId })
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, data: result.schedule }, 200, req)
+      } catch (err: any) {
+        return errorResponse(err.message ?? 'Failed to update schedule', 400, req)
+      }
+    }
+
+    // ── Schedule: DELETE soft-delete ──
+
+    if (method === 'DELETE' && path.match(/^\/api\/schedules\/[^/]+$/)) {
+      const session = requireAuth(req)
+      if (!session) return errorResponse('Unauthorized', 401, req)
+
+      const csrf = validateCsrf(req)
+      if (!csrf.valid) {
+        auditLog('csrf_rejected', session, csrf.error ?? 'Invalid CSRF', undefined, ip)
+        return errorResponse(csrf.error ?? 'CSRF validation failed', 403, req)
+      }
+      if (isWriteRateLimited(ip)) {
+        return errorResponse('Rate limit exceeded', 429, req)
+      }
+
+      const scheduleId = path.split('/')[3]
+      try {
+        const { deleteSchedule } = await import('../scheduler/schedule-api.js')
+        const deleted = deleteSchedule(scheduleId)
+        if (!deleted) return errorResponse('Schedule not found', 404, req)
+
+        auditLog('schedule_deleted', session, `Schedule: ${scheduleId}`, scheduleId, ip)
+        broadcastGlobal('schedule_deleted', { scheduleId })
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, deleted: true }, 200, req)
+      } catch (err: any) {
+        return errorResponse(err.message ?? 'Failed to delete schedule', 400, req)
       }
     }
 
