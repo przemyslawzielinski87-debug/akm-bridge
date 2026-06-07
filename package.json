@@ -1,0 +1,27 @@
+{
+  "name": "akm-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Controlled AKM v0.8.1 adapter — OpenCode MCP tools + local HTTP API",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/mcp-server.js",
+    "start:http": "node dist/http-server.js",
+    "dev:mcp": "tsx src/mcp-server.ts",
+    "dev:http": "tsx src/http-server.ts",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
+    "test:injection": "bash tests/run-injection-tests.sh",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "tsx": "^4.22.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.19.20",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
+    "typescript": "^5.9.3"
+  }
+}

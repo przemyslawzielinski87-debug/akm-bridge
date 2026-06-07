@@ -1,0 +1,40 @@
+[Unit]
+Description=AKM Bridge — Read-only HTTP API for AKM v0.8.1
+Documentation=https://github.com/itlackey/akm-stash
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/projekt/akm-bridge
+ExecStart=/usr/bin/node /root/projekt/akm-bridge/dist/http-server.js
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/root/akm /root/.local/share/akm /root/.config/akm
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+# Network: loopback only
+IPAddressAllow=127.0.0.1
+IPDeny=any
+
+# Environment
+Environment=AKM_BINARY=/root/.bun/bin/akm
+Environment=AKM_TIMEOUT=15000
+Environment=PATH=/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+
+[Install]
+WantedBy=multi-user.target

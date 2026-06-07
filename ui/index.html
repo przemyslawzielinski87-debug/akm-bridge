@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AKM Knowledge</title>
+<script>
+(function(){
+  var base = window.location.origin + window.location.pathname.replace(/\/?$/, '/');
+  var el = document.createElement('base');
+  el.href = base;
+  document.head.appendChild(el);
+})();
+</script>
+<link rel="stylesheet" href="assets/akm-panel.css" />
+</head>
+<body>
+<div id="akm-knowledge-panel-root"></div>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+*.bak
+*.bak.*
+*.log
+*.conf.before-*
+node_modules/
+dist/
+coverage/
+data/
+.DS_Store

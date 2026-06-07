@@ -1,0 +1,14 @@
+{
+  "mcp": {
+    "servers": {
+      "akm-bridge": {
+        "command": "/path/to/bun",
+        "args": ["run", "/path/to/akm-bridge/dist/mcp-server.js"],
+        "enabled": true,
+        "env": {
+          "PATH": "/path/to/bun/bin:/usr/local/bin:/usr/bin:/bin"
+        }
+      }
+    }
+  }
+}
