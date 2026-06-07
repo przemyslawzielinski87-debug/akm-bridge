@@ -5,12 +5,9 @@
  * public HTML, API contracts, security, and configuration.
  */
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PROJECT_ROOT = resolve(__dirname, '..')
+const PROJECT_ROOT = resolve(process.cwd())
 const OPENCODE_CONFIG = '/root/.config/opencode/opencode.json'
 const COMMANDS_DIR = '/root/.config/opencode/commands'
 const SKILLS_DIR = '/root/.config/opencode/skills'

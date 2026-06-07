@@ -5,14 +5,11 @@
 
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync, unlinkSync, writeFileSync, readFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const FAKE_AKM = resolve(__dirname, '../fixtures/fake-akm.sh')
+const PROJECT_ROOT = resolve(process.cwd())
+const FAKE_AKM = resolve(PROJECT_ROOT, 'fixtures/fake-akm.sh')
 const REAL_AKM = '/root/.bun/bin/akm'
-const PROJECT_ROOT = resolve(__dirname, '..')
 
 // Override AKM binary path by setting env
 process.env.AKM_BINARY = FAKE_AKM
@@ -111,7 +108,7 @@ async function testValidShow() {
   console.assert(result.data?.title === 'test-doc', 'title should be test-doc')
   console.assert(result.data?.type === 'knowledge', 'type should be knowledge')
   console.assert(typeof result.data?.content === 'string', 'content should be a string')
-  console.assert(result.data?.content.length > 0, 'content should not be empty')
+  console.assert((result.data?.content?.length ?? 0) > 0, 'content should not be empty')
   console.log('PASS: valid resource preview')
 }
 
@@ -136,7 +133,7 @@ async function testUnavailableBinary() {
   const mod = await import('../src/adapter.js')
   // Override binary in config - we need to temporarily modify
   // For this test, we'll directly test binary path validation
-  const originalRun = mod.runAkm
+  const originalRun = (mod as any).runAkm
   // We'll just test that execFile fails correctly via the adapter
   // Since we can't easily reimport, let's use real AKM check
   try {
@@ -221,8 +218,8 @@ async function testUnsupportedOperation() {
   console.assert(ALLOWED_OPERATIONS.has('search'), 'search should be allowed')
   console.assert(ALLOWED_OPERATIONS.has('reindex'), 'reindex should be allowed (ETAP 4B)')
   console.assert(ALLOWED_OPERATIONS.has('feedback'), 'feedback should be allowed (ETAP 4B)')
-  console.assert(!ALLOWED_OPERATIONS.has('exec'), 'exec should NOT be allowed')
-  console.assert(!ALLOWED_OPERATIONS.has('delete'), 'delete should NOT be allowed')
+  console.assert(!(ALLOWED_OPERATIONS as Set<string>).has('exec'), 'exec should NOT be allowed')
+  console.assert(!(ALLOWED_OPERATIONS as Set<string>).has('delete'), 'delete should NOT be allowed')
   console.log('PASS: write operations properly configured')
 }
 
@@ -247,7 +244,7 @@ async function testInjectionBlocked() {
   // Path traversal in ref
   const r4 = await showResource({ ref: '../../etc/passwd' })
   // This should fail because no such ref exists in AKM, not because of shell injection
-  console.assert(result => typeof result.ok === 'boolean', 'path traversal should not crash')
+  console.assert(typeof (r4 as any)?.ok === 'boolean', 'path traversal should not crash')
 
   console.log('PASS: injection payloads treated as plain input')
 }
@@ -402,51 +399,44 @@ async function testExit4WrongJsonStructure() {
   try { unlinkSync(script) } catch {}
 }
 
-/* ── Run tests ── */
+/* ── Jest test suite ── */
 
-async function runAll() {
-  setup()
+describe('AKM Bridge Adapter', () => {
+  let origAkmBinary: string | undefined
 
-  const tests = [
-    testValidHealth,
-    testValidStatus,
-    testValidSources,
-    testValidSearch,
-    testSearchNoMatches,
-    testValidShow,
-    testInvalidShow,
-    testUnavailableBinary,
-    testTimeout,
-    testOversizedOutput,
-    testMalformedOutput,
-    testUnsupportedOperation,
-    testInjectionBlocked,
-    testConcurrency,
-    testExit4ValidJson,
-    testExit4EmptyStdout,
-    testExit4InvalidJson,
-    testExit1WithStdout,
-    testExit127WithStdout,
-    testNormalExit0,
-    testExit4WrongJsonStructure,
-  ]
+  beforeAll(() => {
+    setup()
+    origAkmBinary = process.env.AKM_BINARY
+  })
 
-  let passed = 0
-  let failed = 0
+  afterEach(() => {
+    process.env.AKM_BINARY = origAkmBinary
+  })
 
-  for (const test of tests) {
-    try {
-      await test()
-      passed++
-    } catch (e) {
-      console.error(`FAIL: ${test.name}: ${(e as Error).message}`)
-      failed++
-    }
-  }
+  afterAll(() => {
+    cleanup()
+    process.env.AKM_BINARY = origAkmBinary
+  })
 
-  console.log(`\n=== Results: ${passed} passed, ${failed} failed ===`)
-  cleanup()
-  process.exit(failed > 0 ? 1 : 0)
-}
-
-runAll()
+  test('valid health call', async () => { await testValidHealth() })
+  test('valid status call', async () => { await testValidStatus() })
+  test('valid source listing', async () => { await testValidSources() })
+  test('valid search', async () => { await testValidSearch() })
+  test('search with no matches', async () => { await testSearchNoMatches() })
+  test('valid resource preview', async () => { await testValidShow() })
+  test('invalid resource reference', async () => { await testInvalidShow() })
+  test('unavailable AKM binary', async () => { await testUnavailableBinary() })
+  test('AKM timeout', async () => { await testTimeout() }, 30000)
+  test('oversized output handling', async () => { await testOversizedOutput() })
+  test('malformed output handling', async () => { await testMalformedOutput() })
+  test('unsupported operation', async () => { await testUnsupportedOperation() })
+  test('injection payloads treated as plain input', async () => { await testInjectionBlocked() })
+  test('concurrent request bounding', async () => { await testConcurrency() })
+  test('exit code 4 + valid JSON warn status', async () => { await testExit4ValidJson() })
+  test('exit code 4 + empty stdout', async () => { await testExit4EmptyStdout() })
+  test('exit code 4 + invalid JSON', async () => { await testExit4InvalidJson() })
+  test('exit code 1 + stdout', async () => { await testExit1WithStdout() })
+  test('exit code 127 + stdout', async () => { await testExit127WithStdout() })
+  test('normal exit 0 unaffected', async () => { await testNormalExit0() })
+  test('exit code 4 + wrong JSON structure', async () => { await testExit4WrongJsonStructure() })
+})

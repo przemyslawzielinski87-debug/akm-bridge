@@ -5,13 +5,10 @@
 
 import { execFileSync, execSync } from 'node:child_process'
 import { existsSync, unlinkSync, writeFileSync } from 'node:fs'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const FAKE_AKM = resolve(__dirname, '../fixtures/fake-akm.sh')
-const PROJECT_ROOT = resolve(__dirname, '..')
+const PROJECT_ROOT = resolve(process.cwd())
+const FAKE_AKM = resolve(PROJECT_ROOT, 'fixtures/fake-akm.sh')
 
 process.env.AKM_BINARY = FAKE_AKM
 process.env.AKM_AGENT_MODE = 'supervised'
@@ -152,8 +149,8 @@ async function testSecretProposalBlocked() {
 async function testAutonomousAcceptDenied() {
   const { ALLOWED_OPERATIONS } = await importTypes()
   console.assert(ALLOWED_OPERATIONS.has('proposal_accept'), 'proposal_accept in adapter layer')
-  console.assert(!ALLOWED_OPERATIONS.has('exec'), 'exec not allowed')
-  console.assert(!ALLOWED_OPERATIONS.has('delete'), 'delete not allowed')
+  console.assert(!(ALLOWED_OPERATIONS as Set<string>).has('exec'), 'exec not allowed')
+  console.assert(!(ALLOWED_OPERATIONS as Set<string>).has('delete'), 'delete not allowed')
   console.log('PASS: G — autonomous accept denied (HTTP-only with CSRF)')
 }
 
@@ -186,7 +183,7 @@ async function testBudgetEnforcement() {
 
 async function testFeedbackWorkflow() {
   const { submitFeedback } = await importAdapter()
-  const result = await submitFeedback({ ref: 'test/test.md', positive: true, reason: 'verified against runtime' })
+  const result = await submitFeedback('test/test.md', true, 'verified against runtime')
   console.assert(result.ok === true, 'feedback should succeed')
   console.log('PASS: I — feedback submission works')
 }
@@ -252,40 +249,22 @@ async function testRollbackToManual() {
   console.log('PASS: L — rollback to manual, read tools work')
 }
 
-async function runAll() {
-  setup()
+/* ── Jest test suite ── */
 
-  const tests = [
-    testSimpleTaskClassification,
-    testAgentModeConfig,
-    testDeploymentTask,
-    testIncidentTask,
-    testStaleKnowledge,
-    testAkmOfflineFallback,
-    testSecretProposalBlocked,
-    testAutonomousAcceptDenied,
-    testBudgetEnforcement,
-    testFeedbackWorkflow,
-    testAgentRunTelemetry,
-    testRollbackToManual,
-  ]
+describe('Agent Workflow', () => {
+  beforeAll(() => setup())
+  afterAll(() => cleanup())
 
-  let passed = 0
-  let failed = 0
-
-  for (const test of tests) {
-    try {
-      await test()
-      passed++
-    } catch (e) {
-      console.error(`FAIL: ${test.name}: ${(e as Error).message}`)
-      failed++
-    }
-  }
-
-  console.log(`\n=== Agent Workflow Results: ${passed} passed, ${failed} failed ===`)
-  cleanup()
-  process.exit(failed > 0 ? 1 : 0)
-}
-
-runAll()
+  test('simple task classification', async () => { await testSimpleTaskClassification() })
+  test('agent mode config', async () => { await testAgentModeConfig() })
+  test('deployment task classification and budget', async () => { await testDeploymentTask() })
+  test('incident task', async () => { await testIncidentTask() })
+  test('stale knowledge runtime priority', async () => { await testStaleKnowledge() })
+  test('AKM offline fallback', async () => { await testAkmOfflineFallback() })
+  test('secret proposal blocked', async () => { await testSecretProposalBlocked() })
+  test('autonomous accept denied', async () => { await testAutonomousAcceptDenied() })
+  test('budget enforcement limits', async () => { await testBudgetEnforcement() })
+  test('feedback submission', async () => { await testFeedbackWorkflow() })
+  test('agent run telemetry', async () => { await testAgentRunTelemetry() })
+  test('rollback to manual', async () => { await testRollbackToManual() })
+})

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(process.cwd());
 const DOCS = path.join(ROOT, "docs");
 const SCRIPTS = path.join(ROOT, "scripts");
 const TEMPLATES = path.join(ROOT, "templates");

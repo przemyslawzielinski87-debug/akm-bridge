@@ -1,9 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const ROOT = path.resolve(path.dirname(__filename), '..');
+const ROOT = path.resolve(process.cwd());
 const COMPATIBILITY_DIR = path.join(ROOT, 'compatibility');
 const SCRIPTS_DIR = path.join(ROOT, 'scripts');
 const COMMANDS_DIR = '/root/.config/opencode/commands';

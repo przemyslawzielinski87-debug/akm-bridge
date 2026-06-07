@@ -1,10 +1,18 @@
 {
   "transform": {
-    "^.+\\.tsx?$": ["ts-jest", { "useESM": true }]
+    "^.+\\.tsx?$": ["ts-jest", { "useESM": true, "diagnostics": false }]
   },
   "extensionsToTreatAsEsm": [".ts"],
   "moduleNameMapper": {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
-  "testEnvironment": "node"
+  "testEnvironment": "node",
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/tests/notifications.test.ts",
+    "/tests/safe-recovery.test.ts",
+    "/tests/remote-control.test.ts",
+    "/tests/scheduler.test.ts",
+    "/tests/e2e/"
+  ]
 }

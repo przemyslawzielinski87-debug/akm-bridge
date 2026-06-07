@@ -4,13 +4,10 @@
  */
 
 import { execFileSync, execSync } from 'node:child_process'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const FAKE_AKM = resolve(__dirname, '../fixtures/fake-akm.sh')
-const PROJECT_ROOT = resolve(__dirname, '..')
+const PROJECT_ROOT = resolve(process.cwd())
+const FAKE_AKM = resolve(PROJECT_ROOT, 'fixtures/fake-akm.sh')
 
 function runAKM(...args: string[]): { stdout: string; stderr: string } {
   try {

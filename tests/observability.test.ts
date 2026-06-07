@@ -3,12 +3,9 @@
  */
 
 import { execFileSync } from 'node:child_process'
-import { resolve, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const PROJECT_ROOT = resolve(__dirname, '..')
+const PROJECT_ROOT = resolve(process.cwd())
 
 const HEALTH_CHECK = resolve(PROJECT_ROOT, 'scripts/health-check.sh')
 const FAKE_AKM = resolve(PROJECT_ROOT, 'fixtures/fake-akm.sh')

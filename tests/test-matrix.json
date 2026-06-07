@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "generated_at": "2026-06-07T19:55:00Z",
+  "suites": [
+    {
+      "id": "jest-adapter",
+      "file": "tests/adapter.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=adapter --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-agent-workflow",
+      "file": "tests/agent-workflow.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=agent-workflow --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-bootstrap",
+      "file": "tests/bootstrap.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=bootstrap --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-dashboard",
+      "file": "tests/dashboard.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=dashboard --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-mcp-contract",
+      "file": "tests/mcp-contract.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-observability",
+      "file": "tests/observability.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=observability --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-version-management",
+      "file": "tests/version-management.test.ts",
+      "runner": "jest",
+      "command": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=version-management --forceExit",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "vitest-remote-control",
+      "file": "tests/remote-control.test.ts",
+      "runner": "vitest",
+      "command": "npx vitest run tests/remote-control.test.ts",
+      "required": true,
+      "timeoutSeconds": 30,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "vitest-scheduler",
+      "file": "tests/scheduler.test.ts",
+      "runner": "vitest",
+      "command": "npx vitest run tests/scheduler.test.ts",
+      "required": true,
+      "timeoutSeconds": 30,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "bun-notifications",
+      "file": "tests/notifications.test.ts",
+      "runner": "bun",
+      "command": "bun test tests/notifications.test.ts",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "bun-safe-recovery",
+      "file": "tests/safe-recovery.test.ts",
+      "runner": "bun",
+      "command": "bun test tests/safe-recovery.test.ts",
+      "required": true,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": null
+    },
+    {
+      "id": "jest-test-runner",
+      "file": "tests/test-runner.ts",
+      "runner": "bun",
+      "command": "bun run tests/test-runner.ts",
+      "required": false,
+      "timeoutSeconds": 60,
+      "status": "passing",
+      "quarantine": {
+        "reason": "Legacy test runner superseded by Jest test suites. Runs bun+node process for adapter unit/integration but duplicates jest-adapter tests. Keep for regression comparison.",
+        "owner": "infra-ops",
+        "manual_command": "bun run tests/test-runner.ts",
+        "last_successful_run": "2026-06-07",
+        "expiry_date": "2026-09-07"
+      }
+    }
+  ]
+}

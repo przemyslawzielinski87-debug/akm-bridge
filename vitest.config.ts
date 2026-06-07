@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       'bun:sqlite': resolve(__dirname, '__mocks__/bun-sqlite.ts'),
     },
-    include: ['tests/scheduler.test.ts'],
+    include: ['tests/scheduler.test.ts', 'tests/remote-control.test.ts'],
     testTimeout: 15000,
   },
 });
