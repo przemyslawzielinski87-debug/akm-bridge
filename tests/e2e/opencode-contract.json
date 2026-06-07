@@ -123,6 +123,16 @@
       "name": "/performance",
       "agent": "infra-ops",
       "file": "/root/.config/opencode/commands/performance.md"
+    },
+    {
+      "name": "/slo",
+      "agent": "explore",
+      "file": "/root/.config/opencode/commands/slo.md"
+    },
+    {
+      "name": "/load-test",
+      "agent": "akm-build",
+      "file": "/root/.config/opencode/commands/load-test.md"
     }
   ],
   "skills": [
@@ -213,6 +223,10 @@
     {
       "name": "performance-profiling",
       "file": "/root/.config/opencode/skills/performance-profiling/SKILL.md"
+    },
+    {
+      "name": "slo-capacity-planning",
+      "file": "/root/.config/opencode/skills/slo-capacity-planning/SKILL.md"
     }
   ],
   "mcpServers": [
@@ -301,9 +315,19 @@
     "/root/.config/opencode/skills/secret-safe-audit/SKILL.md",
     "/root/.config/opencode/skills/token-efficient-debug/SKILL.md",
     "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md",
-"/root/.config/opencode/skills/brainstorming/SKILL.md",
-"/root/.config/opencode/skills/multi-project-governance/SKILL.md",
-    "/root/.config/opencode/skills/performance-profiling/SKILL.md"
+    "/root/.config/opencode/skills/brainstorming/SKILL.md",
+    "/root/.config/opencode/skills/multi-project-governance/SKILL.md",
+    "/root/.config/opencode/skills/performance-profiling/SKILL.md",
+    "config/slo/slo-policy.json",
+    "performance/capacity-baseline.json",
+    "src/slo/slo-types.ts",
+    "src/capacity/capacity-types.ts",
+    "scripts/run-capacity-tests.ts",
+    "scripts/calculate-error-budget.ts",
+    "templates/commands/slo.md",
+    "templates/commands/load-test.md",
+    "templates/skills/slo-capacity-planning/SKILL.md",
+    "docs/OPENCODE-SLO-CAPACITY-PLANNING.md"
   ],
   "runtimeChecks": [
     {
@@ -425,6 +449,42 @@
     {
       "id": "performance-ci-gate",
       "description": "CI has a performance-smoke job that runs benchmarks in CI mode"
+    },
+    {
+      "id": "slo-policy-exists",
+      "description": "config/slo/slo-policy.json exists with valid schema (SLIs, SLOs, error budget config)"
+    },
+    {
+      "id": "capacity-baseline-exists",
+      "description": "performance/capacity-baseline.json exists with queue, scheduler, notification, dashboard, MCP, SQLite, resource limits"
+    },
+    {
+      "id": "slo-command-exists",
+      "description": "/slo command is discoverable with valid markdown frontmatter and explore agent reference"
+    },
+    {
+      "id": "load-test-command-exists",
+      "description": "/load-test command is discoverable with valid markdown frontmatter and akm-build agent, default smoke-only mode"
+    },
+    {
+      "id": "slo-capacity-skill-exists",
+      "description": "slo-capacity-planning skill is discoverable with valid YAML frontmatter (name, description)"
+    },
+    {
+      "id": "capacity-smoke-ci-gate",
+      "description": "CI has a capacity-smoke job that runs smoke capacity tests"
+    },
+    {
+      "id": "error-budget-script-exists",
+      "description": "scripts/calculate-error-budget.ts exists and produces SLO status report"
+    },
+    {
+      "id": "slo-read-only",
+      "description": "/slo command is read-only by default, no SLO config changes without approval"
+    },
+    {
+      "id": "load-test-fixtures-only",
+      "description": "/load-test uses fixtures and mock providers by default, no real model calls"
     }
   ]
 }

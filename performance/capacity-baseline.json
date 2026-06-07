@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "",
+  "limits": {
+    "queue": {
+      "maxQueuedTasks": 500,
+      "maxConcurrentReadTasks": 10,
+      "maxConcurrentWriteTasks": 3,
+      "maxTasksPerProject": 50,
+      "maxTasksPerEnvironment": 25
+    },
+    "scheduler": {
+      "maxEntries": 5000,
+      "scanBatchSize": 100,
+      "maxCatchUpTasks": 20
+    },
+    "notification": {
+      "maxBacklog": 10000,
+      "maxBatchSize": 50,
+      "maxRetries": 5
+    },
+    "dashboard": {
+      "maxSseClients": 50,
+      "maxRequestsPerSecond": 20,
+      "cacheTtlMs": 30000
+    },
+    "mcp": {
+      "maxCallsPerSecond": 10,
+      "maxPayloadBytes": 1048576,
+      "timeoutMs": 30000
+    },
+    "sqlite": {
+      "maxWriteTransactionsPerSecond": 50,
+      "busyTimeoutMs": 5000,
+      "maxWalSizeMb": 64
+    },
+    "resource": {
+      "safeCpuPercent": 80,
+      "safeRamPercent": 80,
+      "safeDiskPercent": 80,
+      "maxOpenFiles": 1024
+    },
+    "custom": [
+      { "id": "cap-max-sse-bytes", "name": "Max SSE payload bytes per client", "component": "dashboard", "softLimit": 5242880, "hardLimit": 10485760, "recoveryThreshold": 4194304, "unit": "bytes", "measurementSource": "benchmark", "justification": "Prevent dashboard memory exhaustion from large SSE payloads" },
+      { "id": "cap-max-akm-searches", "name": "Max AKM searches per minute", "component": "akm", "softLimit": 60, "hardLimit": 100, "recoveryThreshold": 30, "unit": "count", "measurementSource": "benchmark", "justification": "Prevent AKM bridge overload" }
+    ]
+  },
+  "validatedCommit": "",
+  "validatedAt": ""
+}

@@ -44,16 +44,19 @@
     "directory": "/root/.config/opencode/commands",
     "files": [
       "brainstorm.md",
-      "projects.md"
+      "projects.md",
+      "slo.md",
+      "load-test.md"
     ]
   },
   "skills": {
-    "count": 24,
+    "count": 25,
     "directory": "/root/.config/opencode/skills",
     "directories": [
       "brainstorming",
       "multi-project-governance",
-      "performance-profiling"
+      "performance-profiling",
+      "slo-capacity-planning"
     ]
   },
   "mcpServers": {
@@ -121,6 +124,18 @@
     "docs": "docs/OPENCODE-BRAINSTORMING-SKILL.md",
     "template": "docs/examples/skills/brainstorming/SKILL.md"
   },
+  "activeSloCapacityPaths": {
+    "sloPolicy": "config/slo/slo-policy.json",
+    "capacityBaseline": "performance/capacity-baseline.json",
+    "sloTypes": "src/slo/slo-types.ts",
+    "capacityTypes": "src/capacity/capacity-types.ts",
+    "errorBudgetScript": "scripts/calculate-error-budget.ts",
+    "capacityTestScript": "scripts/run-capacity-tests.ts",
+    "sloCommandTemplate": "templates/commands/slo.md",
+    "loadTestCommandTemplate": "templates/commands/load-test.md",
+    "skillTemplate": "templates/skills/slo-capacity-planning/SKILL.md",
+    "docs": "docs/OPENCODE-SLO-CAPACITY-PLANNING.md"
+  },
   "activePerformancePaths": {
     "command": "~/.config/opencode/commands/performance.md",
     "skill": "~/.config/opencode/skills/performance-profiling/SKILL.md",
@@ -175,6 +190,13 @@
     "performance_profiling_skill_exists",
     "performance_baseline_file_exists",
     "performance_runner_executable",
-    "performance_ci_gate"
+    "performance_ci_gate",
+    "slo_policy_exists",
+    "capacity_baseline_exists",
+    "slo_command_exists",
+    "load_test_command_exists",
+    "slo_capacity_planning_skill_exists",
+    "capacity_smoke_ci_gate",
+    "error_budget_script_exists"
   ]
 }

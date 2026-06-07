@@ -898,3 +898,140 @@ describe("Performance Profiling", () => {
     expect(content).toContain("perf:ci");
   });
 });
+
+describe("SLO & Capacity Planning", () => {
+  const sloTypesFile = path.join(ROOT, "src", "slo", "slo-types.ts");
+  const capacityTypesFile = path.join(ROOT, "src", "capacity", "capacity-types.ts");
+  const sloPolicyFile = path.join(ROOT, "config", "slo", "slo-policy.json");
+  const capacityBaselineFile = path.join(ROOT, "performance", "capacity-baseline.json");
+  const capacityRunnerFile = path.join(ROOT, "scripts", "run-capacity-tests.ts");
+  const errorBudgetFile = path.join(ROOT, "scripts", "calculate-error-budget.ts");
+  const sloCommandTemplate = path.join(ROOT, "templates", "commands", "slo.md");
+  const loadTestCommandTemplate = path.join(ROOT, "templates", "commands", "load-test.md");
+  const skillDir = path.join(ROOT, "templates", "skills", "slo-capacity-planning");
+  const skillFile = path.join(skillDir, "SKILL.md");
+  const docsFile = path.join(ROOT, "docs", "OPENCODE-SLO-CAPACITY-PLANNING.md");
+
+  it("SLO types file exists with core exports", () => {
+    expect(exists(sloTypesFile)).toBe(true);
+    const content = fs.readFileSync(sloTypesFile, "utf-8");
+    expect(content).toContain("export enum SliCategory");
+    expect(content).toContain("export interface SliDefinition");
+    expect(content).toContain("export interface SloTarget");
+    expect(content).toContain("export interface SloStatus");
+    expect(content).toContain("export interface ErrorBudget");
+    expect(content).toContain("export function calculateSloStatus");
+    expect(content).toContain("export function calculateErrorBudget");
+  });
+
+  it("capacity types file exists with core exports", () => {
+    expect(exists(capacityTypesFile)).toBe(true);
+    const content = fs.readFileSync(capacityTypesFile, "utf-8");
+    expect(content).toContain("export interface CapacityLimit");
+    expect(content).toContain("export interface CapacityModel");
+    expect(content).toContain("export interface CapacityStatus");
+    expect(content).toContain("export function calculateCapacityStatus");
+    expect(content).toContain("export function calculatePercentUsed");
+  });
+
+  it("SLO policy file exists with valid schema", () => {
+    expect(exists(sloPolicyFile)).toBe(true);
+    const policy = JSON.parse(fs.readFileSync(sloPolicyFile, "utf-8"));
+    expect(policy.schemaVersion).toBe(1);
+    expect(Array.isArray(policy.slis)).toBe(true);
+    expect(policy.slis.length).toBeGreaterThanOrEqual(5);
+    expect(Array.isArray(policy.slos)).toBe(true);
+    expect(policy.slos.length).toBeGreaterThanOrEqual(5);
+    expect(policy.globalErrorBudgetWindowMs).toBeGreaterThan(0);
+  });
+
+  it("capacity baseline file exists with all limit categories", () => {
+    expect(exists(capacityBaselineFile)).toBe(true);
+    const baseline = JSON.parse(fs.readFileSync(capacityBaselineFile, "utf-8"));
+    expect(baseline.schemaVersion).toBe(1);
+    expect(baseline.limits.queue).toBeDefined();
+    expect(baseline.limits.scheduler).toBeDefined();
+    expect(baseline.limits.notification).toBeDefined();
+    expect(baseline.limits.dashboard).toBeDefined();
+    expect(baseline.limits.mcp).toBeDefined();
+    expect(baseline.limits.sqlite).toBeDefined();
+    expect(baseline.limits.resource).toBeDefined();
+  });
+
+  it("capacity test runner exists", () => {
+    expect(exists(capacityRunnerFile)).toBe(true);
+    const content = fs.readFileSync(capacityRunnerFile, "utf-8");
+    expect(content).toContain("burstTest");
+    expect(content).toContain("sustainedTest");
+    expect(content).toContain("smokeTests");
+    expect(content).toContain("main()");
+  });
+
+  it("error budget script exists", () => {
+    expect(exists(errorBudgetFile)).toBe(true);
+    const content = fs.readFileSync(errorBudgetFile, "utf-8");
+    expect(content).toContain("BudgetReport");
+    expect(content).toContain("loadPolicy");
+    expect(content).toContain("sloId");
+  });
+
+  it("slo command template exists with valid structure", () => {
+    expect(exists(sloCommandTemplate)).toBe(true);
+    const content = fs.readFileSync(sloCommandTemplate, "utf-8");
+    expect(content).toContain("# Command: /slo");
+    expect(content).toContain("## Agent");
+    expect(content).toContain("explore");
+    expect(content).toContain("## Safety");
+    expect(content).toContain("Read-only");
+  });
+
+  it("load-test command template exists with valid structure", () => {
+    expect(exists(loadTestCommandTemplate)).toBe(true);
+    const content = fs.readFileSync(loadTestCommandTemplate, "utf-8");
+    expect(content).toContain("# Command: /load-test");
+    expect(content).toContain("## Agent");
+    expect(content).toContain("akm-build");
+    expect(content).toContain("## Safety");
+    expect(content).toContain("smoke");
+  });
+
+  it("skill template exists with valid frontmatter", () => {
+    expect(exists(skillFile)).toBe(true);
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("name: slo-capacity-planning");
+    expect(content).toContain("description:");
+    expect(content).toContain("## When to Use");
+    expect(content).toContain("## Workflow");
+    expect(content).toContain("## Handoff");
+    expect(content).toContain("## Prohibitions");
+  });
+
+  it("SLO capacity planning docs exist", () => {
+    expect(exists(docsFile)).toBe(true);
+    const content = fs.readFileSync(docsFile, "utf-8");
+    expect(content).toContain("# OpenCode SLO & Capacity Planning");
+    expect(content).toContain("## SLIs and SLOs");
+    expect(content).toContain("## Error Budgets");
+    expect(content).toContain("## Capacity Limits");
+    expect(content).toContain("## Backpressure");
+    expect(content).toContain("## Circuit Breakers");
+    expect(content).toContain("## Load Tests");
+    expect(content).toContain("## Commands");
+  });
+
+  it("package.json has SLO and capacity scripts", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));
+    expect(pkg.scripts["slo:status"]).toBeDefined();
+    expect(pkg.scripts["slo:budgets"]).toBeDefined();
+    expect(pkg.scripts["capacity:smoke"]).toBeDefined();
+    expect(pkg.scripts["capacity:burst"]).toBeDefined();
+  });
+
+  it("CI has capacity-smoke job", () => {
+    const ciFile = path.join(ROOT, ".github", "workflows", "ci.yml");
+    if (!exists(ciFile)) return;
+    const content = fs.readFileSync(ciFile, "utf-8");
+    expect(content).toContain("capacity-smoke");
+    expect(content).toContain("capacity:smoke");
+  });
+});

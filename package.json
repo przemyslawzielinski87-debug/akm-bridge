@@ -28,7 +28,11 @@
     "perf:ci": "tsx scripts/run-performance-baseline.ts --ci",
     "perf:compare": "tsx scripts/run-performance-baseline.ts --compare performance/baseline.json",
     "perf:update": "tsx scripts/run-performance-baseline.ts --update-baseline",
-    "perf:json": "tsx scripts/run-performance-baseline.ts --json"
+    "perf:json": "tsx scripts/run-performance-baseline.ts --json",
+    "slo:status": "tsx scripts/calculate-error-budget.ts --status",
+    "slo:budgets": "tsx scripts/calculate-error-budget.ts --window 24h",
+    "capacity:smoke": "tsx scripts/run-capacity-tests.ts --smoke",
+    "capacity:burst": "tsx scripts/run-capacity-tests.ts --burst"
   },
   "dependencies": {
     "tsx": "^4.22.4"

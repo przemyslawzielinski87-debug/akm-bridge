@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "",
+  "slis": [
+    {
+      "id": "dashboard-availability",
+      "name": "Dashboard API availability",
+      "category": "availability",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "percent"
+    },
+    {
+      "id": "dashboard-latency",
+      "name": "Dashboard p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "task-create-latency",
+      "name": "Task creation p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "queue-pickup-latency",
+      "name": "Queue pickup p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "mcp-success-rate",
+      "name": "MCP tool call success rate",
+      "category": "correctness",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "percent"
+    },
+    {
+      "id": "mcp-latency",
+      "name": "MCP tool call p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "scheduler-scan-latency",
+      "name": "Scheduler scan p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "notification-dispatch-latency",
+      "name": "Notification dispatch p95 latency",
+      "category": "latency",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 300000,
+      "minSampleCount": 10,
+      "unit": "ms"
+    },
+    {
+      "id": "permission-correctness",
+      "name": "Permission bypass rate (0 allowed)",
+      "category": "correctness",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 3600000,
+      "minSampleCount": 1,
+      "unit": "count"
+    },
+    {
+      "id": "duplicate-task-rate",
+      "name": "Duplicate task creation rate",
+      "category": "correctness",
+      "environments": ["local", "staging", "production"],
+      "measurementWindowMs": 3600000,
+      "minSampleCount": 1,
+      "unit": "count"
+    }
+  ],
+  "slos": [
+    {
+      "id": "slo-dashboard-avail",
+      "sliId": "dashboard-availability",
+      "targetPercent": 99.5,
+      "warningPercent": 99.0,
+      "criticalPercent": 98.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-dashboard-latency",
+      "sliId": "dashboard-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-task-create",
+      "sliId": "task-create-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-queue-pickup",
+      "sliId": "queue-pickup-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-mcp-success",
+      "sliId": "mcp-success-rate",
+      "targetPercent": 99.0,
+      "warningPercent": 98.0,
+      "criticalPercent": 95.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-mcp-latency",
+      "sliId": "mcp-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-scheduler-scan",
+      "sliId": "scheduler-scan-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-notification-dispatch",
+      "sliId": "notification-dispatch-latency",
+      "targetPercent": 95.0,
+      "warningPercent": 90.0,
+      "criticalPercent": 80.0,
+      "budgetPercentPerWindow": 5
+    },
+    {
+      "id": "slo-permission-correctness",
+      "sliId": "permission-correctness",
+      "targetPercent": 100.0,
+      "warningPercent": 99.9,
+      "criticalPercent": 99.5,
+      "budgetPercentPerWindow": 0
+    },
+    {
+      "id": "slo-duplicate-tasks",
+      "sliId": "duplicate-task-rate",
+      "targetPercent": 100.0,
+      "warningPercent": 99.9,
+      "criticalPercent": 99.5,
+      "budgetPercentPerWindow": 0
+    }
+  ],
+  "globalErrorBudgetWindowMs": 86400000,
+  "measurementWindowMs": 300000,
+  "minimumSampleCount": 5
+}
