@@ -15,3 +15,9 @@ scripts/check-opencode-updates.ts  SKIP
 # Compatibility
 compatibility/opencode-version-lock.json  SKIP
 compatibility/matrix.json  SKIP
+
+# Brainstorming templates
+templates/skills/brainstorming/SKILL.md  d4e8cdec14e50e0f37253a51194b440f49946c166ed61f1b8c8d230ddd75442e
+templates/commands/brainstorm.md  f2c0f01a787cf6d70ec93d1ad5504035273ba8be291d4361241eb7e9c3972207
+docs/OPENCODE-BRAINSTORMING-SKILL.md  9713cb20bfc88d0e4d906b8545aadd50e1d2192ebf29cbc982bb0be2c115fa19
+docs/examples/skills/brainstorming/SKILL.md  d4e8cdec14e50e0f37253a51194b440f49946c166ed61f1b8c8d230ddd75442e

@@ -108,6 +108,11 @@
       "name": "/security-scan",
       "agent": "auto",
       "file": "/root/.config/opencode/commands/security-scan.md"
+    },
+    {
+      "name": "/brainstorm",
+      "agent": "explore",
+      "file": "/root/.config/opencode/commands/brainstorm.md"
     }
   ],
   "skills": [
@@ -186,6 +191,10 @@
     {
       "name": "wordpress-safe-content-update",
       "file": "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md"
+    },
+    {
+      "name": "brainstorming",
+      "file": "/root/.config/opencode/skills/brainstorming/SKILL.md"
     }
   ],
   "mcpServers": [
@@ -252,6 +261,7 @@
     "/root/.config/opencode/commands/review-last-change.md",
     "/root/.config/opencode/commands/review.md",
     "/root/.config/opencode/commands/security-scan.md",
+    "/root/.config/opencode/commands/brainstorm.md",
     "/root/.config/opencode/skills/cloudflare-coolify-routing/SKILL.md",
     "/root/.config/opencode/skills/context-efficiency-audit/SKILL.md",
     "/root/.config/opencode/skills/git-safe-workflow/SKILL.md",
@@ -270,7 +280,8 @@
     "/root/.config/opencode/skills/safe-recovery/SKILL.md",
     "/root/.config/opencode/skills/secret-safe-audit/SKILL.md",
     "/root/.config/opencode/skills/token-efficient-debug/SKILL.md",
-    "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md"
+    "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md",
+    "/root/.config/opencode/skills/brainstorming/SKILL.md"
   ],
   "runtimeChecks": [
     {
@@ -283,7 +294,7 @@
     },
     {
       "id": "commands-visible",
-      "description": "All 14 command .md files are present and discoverable in /root/.config/opencode/commands/"
+      "description": "All 15 command .md files are present and discoverable in /root/.config/opencode/commands/"
     },
     {
       "id": "mcp-initialize",
@@ -300,6 +311,34 @@
     {
       "id": "permission-deny",
       "description": "Read-only agents (researcher, reviewer, security-auditor) have deny on edit and external_directory where specified"
+    },
+    {
+      "id": "brainstorming-skill-discovery",
+      "description": "Brainstorming skill is discoverable with valid YAML frontmatter (name, description with trigger keywords)"
+    },
+    {
+      "id": "brainstorming-command-discovery",
+      "description": "/brainstorm command is discoverable with valid markdown frontmatter and explore agent reference"
+    },
+    {
+      "id": "brainstorming-read-only",
+      "description": "Brainstorming skill enforces read-only: no file edits, commits, push, deploy during brainstorming"
+    },
+    {
+      "id": "brainstorming-approval-gate",
+      "description": "Brainstorming skill requires explicit user approval (accept/revise/reject) before implementation"
+    },
+    {
+      "id": "brainstorming-handoff",
+      "description": "Brainstorming skill produces structured handoff with BRAINSTORM_STATUS=APPROVED and 14 fields"
+    },
+    {
+      "id": "brainstorming-selective-loading",
+      "description": "Brainstorming skill is NOT loaded for trivial tasks (typos, simple bugfixes, read-only requests)"
+    },
+    {
+      "id": "brainstorming-no-superpowers",
+      "description": "Full Superpowers plugin is not installed; brainstorming skill is standalone"
     }
   ]
 }

@@ -505,3 +505,112 @@ describe("Secret Placeholder Validation", () => {
     }
   });
 });
+
+// --- Brainstorming Skill ---
+
+describe("Brainstorming Skill", () => {
+  const skillDir = path.join(TEMPLATES, "skills", "brainstorming");
+  const skillFile = path.join(skillDir, "SKILL.md");
+  const cmdFile = path.join(TEMPLATES, "commands", "brainstorm.md");
+
+  it("skill template directory exists", () => {
+    expect(exists(skillDir)).toBe(true);
+  });
+
+  it("skill template file exists", () => {
+    expect(exists(skillFile)).toBe(true);
+  });
+
+  it("skill has valid YAML frontmatter", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content.startsWith("---")).toBe(true);
+    const endFm = content.indexOf("---", 3);
+    expect(endFm).toBeGreaterThan(3);
+    const frontmatter = content.substring(4, endFm);
+    expect(frontmatter).toContain("name: brainstorming");
+    expect(frontmatter).toContain("description:");
+  });
+
+  it("skill has HARD GATE", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("HARD GATE");
+    expect(content).toContain("No implementation until");
+  });
+
+  it("skill has approval gate", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Approval Gate");
+    expect(content).toContain("Accept");
+    expect(content).toContain("Revise");
+    expect(content).toContain("Reject");
+  });
+
+  it("skill has handoff contract", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("BRAINSTORM_STATUS=APPROVED");
+    expect(content).toContain("TARGET_AGENT=");
+    expect(content).toContain("AKM_RESOURCES_USED=");
+  });
+
+  it("skill enforces read-only prohibitions", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Prohibitions");
+    expect(content).toContain("Edit, create, or delete files");
+    expect(content).toContain("Commit, push, or deploy");
+  });
+
+  it("skill has when-to-skip rules", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("When to Skip");
+    expect(content).toContain("Typo fixes");
+    expect(content).toContain("Simple bugfixes");
+  });
+
+  it("skill has AKM integration", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("AKM Integration");
+  });
+
+  it("command template exists", () => {
+    expect(exists(cmdFile)).toBe(true);
+  });
+
+  it("command has valid markdown structure", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("# Command: /brainstorm");
+    expect(content).toContain("## Purpose");
+    expect(content).toContain("## Agent");
+    expect(content).toContain("## Safety");
+    expect(content).toContain("## AKM");
+  });
+
+  it("command references explore agent", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("explore");
+  });
+
+  it("command enforces read-only", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("Read-only");
+    expect(content).toContain("no file edits");
+  });
+
+  it("no full Superpowers plugin references", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).not.toContain("superpowers");
+    expect(content).not.toContain("writing-plans");
+    expect(content).not.toContain("executing-plans");
+    expect(content).not.toContain("tdd-workflow");
+  });
+});

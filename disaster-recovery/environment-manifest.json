@@ -40,14 +40,18 @@
     "files": []
   },
   "commands": {
-    "count": 19,
+    "count": 20,
     "directory": "/root/.config/opencode/commands",
-    "files": []
+    "files": [
+      "brainstorm.md"
+    ]
   },
   "skills": {
-    "count": 21,
+    "count": 22,
     "directory": "/root/.config/opencode/skills",
-    "directories": []
+    "directories": [
+      "brainstorming"
+    ]
   },
   "mcpServers": {
     "count": 7,
@@ -108,6 +112,12 @@
     "/root/.config/opencode/opencode.json",
     "/root/.config/opencode/AGENTS.md"
   ],
+  "activeBrainstormingPaths": {
+    "skill": "~/.config/opencode/skills/brainstorming/SKILL.md",
+    "command": "~/.config/opencode/commands/brainstorm.md",
+    "docs": "docs/OPENCODE-BRAINSTORMING-SKILL.md",
+    "template": "docs/examples/skills/brainstorming/SKILL.md"
+  },
   "secretPlaceholders": [
     {
       "name": "AKM_WRITE_ENABLED",
@@ -129,6 +139,12 @@
     "mcp_initialize",
     "akm_health",
     "permissions_deny",
-    "systemd_verify"
+    "systemd_verify",
+    "brainstorming_skill_exists",
+    "brainstorm_command_exists",
+    "brainstorming_read_only",
+    "brainstorming_approval_gate",
+    "brainstorming_handoff_contract",
+    "brainstorming_selective_loading"
   ]
 }
