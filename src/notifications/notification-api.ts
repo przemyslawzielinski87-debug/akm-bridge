@@ -31,6 +31,23 @@ export function buildNotificationRoutes(deps: NotificationApiDeps) {
     return okResponse({ notifications: list, count: list.length }, req);
   }
 
+  async function handleGetOverview(req: Request, ip: string): Promise<Response> {
+    const session = requireAuth(req);
+    if (!session) return errorResponse("Unauthorized", 401, req);
+    
+    const stats = manager.getStats();
+    const channels = manager.getChannelStatus();
+    const recent = manager.list({ limit: 10 });
+    
+    return okResponse({
+      queued: stats.queued,
+      unread: stats.unread,
+      failed: stats.failed,
+      channels,
+      recent
+    }, req);
+  }
+
   async function handleGetPreferences(req: Request, ip: string): Promise<Response> {
     const session = requireAuth(req);
     if (!session) return errorResponse("Unauthorized", 401, req);
@@ -150,14 +167,14 @@ export function buildNotificationRoutes(deps: NotificationApiDeps) {
   }
 
   return {
-    handleGetNotifications,
-    handleGetPreferences,
-    handlePutPreferences,
-    handleGetChannels,
-    handlePostTest,
-    handleGetDeliveries,
-    handlePostAcknowledge,
-    handleGetStatus,
+    get: {
+      "/api/notifications": handleGetNotifications,
+      "/api/notifications/preferences": handleGetPreferences,
+      "/api/notifications/overview": handleGetOverview
+    },
+    post: {
+      "/api/notifications/preferences": handlePutPreferences
+    }
   };
 }
 

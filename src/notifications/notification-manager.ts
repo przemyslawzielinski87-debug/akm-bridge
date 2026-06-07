@@ -16,6 +16,18 @@ import { formatNotification } from "./notification-formatter.ts";
 import { buildDeduplicationKey, checkQuietHours, shouldSuppress } from "./notification-utils.ts";
 import { buildDeepLink } from "./notification-redactor.ts";
 
+export interface NotificationManagerStats {
+  queued: number;
+  unread: number;
+  failed: number;
+}
+
+export interface ChannelStatus {
+  status: 'healthy' | 'degraded' | 'failed' | 'not_configured';
+  lastSuccess?: string;
+  lastFailure?: string;
+}
+
 export interface NotificationManagerConfig {
   store: NotificationStore;
   email: EmailConfig | null;
@@ -30,6 +42,34 @@ export interface NotificationManagerConfig {
 const SEVERITY_RANK: Record<NotificationSeverity, number> = { info: 0, warning: 1, critical: 2 };
 
 export class NotificationManager {
+  getStats(): NotificationManagerStats {
+    return {
+      queued: this.store.count({ status: 'queued' }),
+      unread: this.store.count({ status: 'delivered', read: false }),
+      failed: this.store.count({ status: 'failed' })
+    };
+  }
+
+  getChannelStatus(): Record<string, ChannelStatus> {
+    const status: Record<string, ChannelStatus> = {};
+    
+    for (const [channel, adapter] of Object.entries(this.adapters)) {
+      if (!adapter) {
+        status[channel] = { status: 'not_configured' };
+        continue;
+      }
+      
+      const health = adapter.getHealth();
+      status[channel] = {
+        status: health.ok ? 'healthy' : 
+          health.degraded ? 'degraded' : 'failed',
+        lastSuccess: this.store.getLastSuccess(channel),
+        lastFailure: this.store.getLastFailure(channel)
+      };
+    }
+    
+    return status;
+  }
   private store: NotificationStore;
   private email: EmailAdapter;
   private telegram: TelegramAdapter;

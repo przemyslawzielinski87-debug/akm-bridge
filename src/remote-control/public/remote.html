@@ -49,6 +49,29 @@ input,select,textarea{font-family:var(--font);font-size:14px}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab .badge{background:var(--yellow-bg);color:var(--yellow);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
 
+/* ── Notifications ── */
+.notification-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;margin-bottom:16px}
+.notification-stats .stat{border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:12px}
+.notification-stats .stat span{font-weight:600}
+.notification-channels{margin-bottom:16px}
+.channel-status{font-size:12px;padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.channel-status .status{font-weight:500;text-transform:capitalize}
+.channel-status .status[data-status="healthy"]{color:var(--green)}
+.channel-status .status[data-status="degraded"]{color:var(--yellow)}
+.channel-status .status[data-status="failed"]{color:var(--red)}
+.channel-status .status[data-status="not_configured"]{color:var(--text-muted)}
+.notification-list{min-height:200px}
+.notification-item{padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
+.notification-item:last-child{border-bottom:none}
+.notification-item .time{color:var(--text-muted);font-size:11px;margin-top:4px}
+.notification-item .summary{margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.notification-item .channel{display:inline-block;padding:2px 6px;background:var(--bg-card);border-radius:4px;font-size:11px;margin-right:4px}
+.notification-item .status{display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;margin-right:4px}
+.notification-item .status-delivered{background:var(--green-bg);color:var(--green)}
+.notification-item .status-failed{background:var(--red-bg);color:var(--red)}
+.notification-item .status-pending{background:var(--yellow-bg);color:var(--yellow)}
+.empty-state{text-align:center;padding:40px 0;color:var(--text-muted)}
+
 /* ── Content ── */
 .content{padding:12px;max-width:900px;margin:0 auto}
 .tab-panel{display:none}
@@ -207,10 +230,30 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     <button class="tab" data-tab="activity" onclick="switchTab('activity')">Activity</button>
     <button class="tab" data-tab="artifacts" onclick="switchTab('artifacts')">Artifacts</button>
     <button class="tab" data-tab="schedules" onclick="switchTab('schedules')">Schedules</button>
+    <button class="tab" data-tab="notifications" onclick="switchTab('notifications')">
+      Notifications <span id="notification-count" class="badge" style="display:none">0</span>
+    </button>
   </div>
 
   <!-- Content -->
   <div class="content">
+    <div id="notifications" class="tab-content" style="display:none">
+      <div class="notification-overview">
+        <div class="notification-stats">
+          <div class="stat">Queued: <span id="notification-queued">0</span></div>
+          <div class="stat">Unread: <span id="notification-unread">0</span></div>
+          <div class="stat">Failed: <span id="notification-failed">0</span></div>
+        </div>
+        <div class="notification-channels">
+          <div class="channel-status" data-channel="email">Email: <span class="status">not_configured</span></div>
+          <div class="channel-status" data-channel="telegram">Telegram: <span class="status">not_configured</span></div>
+          <div class="channel-status" data-channel="webhook">Webhook: <span class="status">not_configured</span></div>
+        </div>
+        <div class="notification-list">
+          <div class="empty-state">No recent notifications</div>
+        </div>
+      </div>
+    </div>
 
     <!-- ── Tasks Tab ── -->
     <div id="tab-tasks" class="tab-panel active">
@@ -618,6 +661,38 @@ input,select,textarea{font-family:var(--font);font-size:14px}
 
   /* ── Tab switching ── */
   window.switchTab = function(name) {
+  if(name === 'notifications') {
+    fetch('/api/notifications/overview')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('notification-queued').textContent = data.queued;
+        document.getElementById('notification-unread').textContent = data.unread;
+        document.getElementById('notification-failed').textContent = data.failed;
+        
+        document.querySelectorAll('.channel-status').forEach(el => {
+          const channel = el.dataset.channel;
+          const statusEl = el.querySelector('.status');
+          statusEl.textContent = data.channels[channel]?.status || 'not_configured';
+          statusEl.dataset.status = data.channels[channel]?.status || 'not_configured';
+        });
+        
+        const listEl = document.querySelector('.notification-list');
+        if(data.recent.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No recent notifications</div>';
+        } else {
+          listEl.innerHTML = data.recent.map(notif => `
+            <div class="notification-item">
+              <div class="summary">${notif.summary}</div>
+              <div class="time">${new Date(notif.time).toLocaleString()}</div>
+              <div>
+                <span class="channel">${notif.channel}</span>
+                <span class="status status-${notif.status}">${notif.status}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      });
+  }
     state.currentTab = name;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));

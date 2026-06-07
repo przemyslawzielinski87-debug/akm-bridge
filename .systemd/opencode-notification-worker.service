@@ -1,0 +1,19 @@
+[Unit]
+Description=OpenCode Notification Worker
+After=network.target
+
+[Service]
+Type=simple
+User=opencode
+WorkingDirectory=/root/projekt/akm-bridge
+ExecStart=/root/.bun/bin/bun run src/notifications/notification-manager.ts
+Restart=on-failure
+RestartSec=5s
+StartLimitInterval=60s
+StartLimitBurst=3
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

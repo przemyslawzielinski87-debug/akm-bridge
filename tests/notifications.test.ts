@@ -170,10 +170,13 @@ describe("Notification store", () => {
   });
 
   it("creates and retrieves a notification", () => {
-    const n = store.createNotification(sampleNotification());
+    const input = sampleNotification();
+    const n = store.createNotification(input);
     expect(n.id).toBeTruthy();
     const got = store.get(n.id);
-    expect(got?.title).toBe("Approval required");
+    expect(got).toBeTruthy();
+    expect(got?.title).toBe(input.title);
+    expect(got?.safeSummary).toBe(input.safeSummary);
   });
 
   it("deduplicates on (dedup_key, channel) UNIQUE", () => {
@@ -253,7 +256,8 @@ describe("Notification manager", () => {
     const r = await manager.emit({
       type: "approval_required",
       severity: "warning",
-      title: "Approval required",
+    title: "Approval required",
+    safeSummary: "Task awaiting approval. Open dashboard to review.",
       safeSummary: "Test approval",
       dedupParts: { id: "appr-1" },
     });

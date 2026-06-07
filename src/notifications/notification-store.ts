@@ -25,6 +25,19 @@ type Database = {
 };
 
 export class NotificationStore {
+  getLastSuccess(channel: string): string | undefined {
+    const result = this.db.prepare(
+      'SELECT created_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(channel, 'delivered') as { created_at: string } | undefined;
+    return result?.created_at;
+  }
+
+  getLastFailure(channel: string): string | undefined {
+    const result = this.db.prepare(
+      'SELECT created_at FROM notification_deliveries WHERE channel = ? AND status = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(channel, 'failed') as { created_at: string } | undefined;
+    return result?.created_at;
+  }
   private db: Database;
 
   constructor(dbPath: string) {
@@ -116,8 +129,8 @@ export class NotificationStore {
           input.taskId,
           input.approvalId,
           input.scheduleId,
-          input.title,
-          input.safeSummary,
+          input.title || '',
+          input.safeSummary || '',
           input.deepLink,
           createdAt,
           input.expiresAt,
@@ -150,8 +163,39 @@ export class NotificationStore {
   }
 
   get(id: string): Notification | null {
-    const row = this.db.prepare("SELECT * FROM notifications WHERE id = ?").get(id) as NotificationRow | null;
-    return row ? this.mapRow(row) : null;
+    try {
+      const stmt = this.db.prepare("SELECT * FROM notifications WHERE id = ?");
+      const row = stmt.get(id) as NotificationRow | null;
+      if (!row) return null;
+      
+      // Debug logging for test investigation
+      if (process.env.NODE_ENV === 'test') {
+        console.log('Retrieved notification row:', JSON.stringify(row, null, 2));
+        console.log('SQL:', stmt.toString());
+        
+        // Verify DB state
+        const allRows = this.db.prepare("SELECT id, title FROM notifications").all() as Array<{id: string, title: string}>;
+        console.log('All notifications in DB:', allRows);
+      }
+      
+      return this.mapRow(row);
+    } catch (e) {
+      if (process.env.NODE_ENV === 'test') {
+        console.error('Error in get:', e);
+      }
+      throw e;
+    }
+  }
+
+  count(filter: { status?: NotificationStatus } = {}): number {
+    let sql = "SELECT COUNT(*) as count FROM notifications";
+    const params: unknown[] = [];
+    if (filter.status) {
+      sql += " WHERE status = ?";
+      params.push(filter.status);
+    }
+    const row = this.db.prepare(sql).get(...params) as { count: number };
+    return row.count;
   }
 
   list(filter: { status?: NotificationStatus; limit?: number } = {}): Notification[] {
@@ -278,7 +322,9 @@ export class NotificationStore {
   }
 
   close() {
-    this.db.close();
+    if (typeof this.db.close === 'function') {
+      this.db.close();
+    }
   }
 }
 
