@@ -21,6 +21,12 @@ EOF
 {"schemaVersion":1,"version":"0.8.1","assetTypes":["skill","command","agent","knowledge","workflow","script","memory","env","vault","secret","wiki","lesson","task"],"searchModes":["fts","semantic","hybrid"],"indexStats":{"entryCount":1866,"lastBuiltAt":"2026-06-06T00:00:00.000Z","hasEmbeddings":true,"vecAvailable":true,"embeddingCount":1866},"sourceProviders":[{"type":"filesystem","name":"meridian-docs","path":"/var/www/strategikon/docs"},{"type":"filesystem","name":"opencode-config","path":"/root/akm/opencode-safe"}]}
 EOF
     ;;
+  status)
+    echo '{"ok":true,"version":"0.8.1","entryCount":1866,"indexBuiltAt":"2026-06-06T00:00:00.000Z","health":"pass"}'
+    ;;
+  capabilities)
+    echo '{"capabilities":["search","health","status","capabilities","list","show","info","stats","feedback","sources"]}'
+    ;;
   list)
     cat <<'EOF'
 {"schemaVersion":1,"stashDir":"/root/akm","sources":[{"name":"meridian-docs","kind":"filesystem","path":"/var/www/strategikon/docs","writable":true,"status":{"exists":true}},{"name":"opencode-config","kind":"filesystem","path":"/root/akm/opencode-safe","writable":true,"status":{"exists":true}}],"totalSources":2}
