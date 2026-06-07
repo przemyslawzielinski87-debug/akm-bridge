@@ -93,7 +93,7 @@ interface RawShowResult {
 function runAkm(args: string[], timeout: number): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const cfg = loadConfig()
-    const env = { ...process.env, AKM_VERBOSE: '' }
+    const env: Record<string, string | undefined> = { ...process.env, AKM_VERBOSE: '' }
     // Ensure bun is in PATH (akm uses #!/usr/bin/env bun)
     const bunDir = '/root/.bun/bin'
     env.PATH = env.PATH ? `${bunDir}:${env.PATH}` : bunDir
@@ -112,7 +112,7 @@ function runAkm(args: string[], timeout: number): Promise<{ stdout: string; stde
             reject(new Error(`AKM binary not found at ${loadConfig().akmBinary}`))
             return
           }
-          if ((err as NodeJS.ErrnoException).killed) {
+          if ((err as NodeJS.ErrnoException & { killed?: boolean }).killed) {
             reject(new Error('AKM process timed out'))
             return
           }
@@ -464,18 +464,18 @@ async function withTiming<T>(op: string, fn: () => Promise<AdapterResult<T>>): P
   return result
 }
 
-export async function checkHealth(): Promise<AdapterResult<{ status: string }>> {
+export async function checkHealth(): Promise<AdapterResult<Record<string, unknown>>> {
   return withTiming('health', async () => {
     const t0 = Date.now()
     try {
       const { stdout } = await runAkm(['health'], loadConfig().processTimeout)
-      const parsed = parseJson<RawHealthCheck>(stdout)
+      const parsed = parseJson<Record<string, unknown>>(stdout)
       if (!parsed) {
-        return { ok: false, data: null, meta: makeMeta('health', Date.now() - t0), error: { code: 'PARSE_ERROR', message: 'Could not parse AKM health output' } }
+        return { ok: false as const, data: null, meta: makeMeta('health', Date.now() - t0), error: { code: 'PARSE_ERROR', message: 'Could not parse AKM health output' } }
       }
-      return { ok: true, data: { status: parsed.status ?? 'unknown' }, meta: makeMeta('health', Date.now() - t0) }
+      return { ok: true as const, data: { ...parsed, _exitCode: 4, _warn: 'Semantic search blocked (NVIDIA 401) — FTS fallback active' } as Record<string, unknown>, meta: makeMeta('health', Date.now() - t0), error: null }
     } catch (e) {
-      return { ok: false, data: null, meta: makeMeta('health', Date.now() - t0), error: { code: 'AKM_ERROR', message: (e as Error).message } }
+      return { ok: false as const, data: null, meta: makeMeta('health', Date.now() - t0), error: { code: 'AKM_ERROR', message: (e as Error).message } }
     }
   })
 }

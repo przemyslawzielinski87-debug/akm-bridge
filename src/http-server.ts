@@ -467,7 +467,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return
   }
 
-  const handler = route[method]
+  const handler = (route as Record<string, AnyHandler | undefined>)[method]
   if (!handler) {
     methodNotAllowed(res)
     return

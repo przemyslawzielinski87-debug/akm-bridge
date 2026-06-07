@@ -294,6 +294,19 @@ const TOOL_DEFINITIONS = [
   },
 ]
 
+/* ── MCP response helpers (stdlib-compliant) ── */
+
+function mcpSuccess(id: number | string | null, data: unknown) {
+  write(success(id, {
+    content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+    isError: false,
+  }))
+}
+
+function mcpError(id: number | string | null, code: number, message: string) {
+  write(error(id, code, message))
+}
+
 /* ── Tool dispatch ── */
 
 async function handleToolCall(
@@ -305,91 +318,137 @@ async function handleToolCall(
     switch (name) {
       case 'akm_health': {
         const result = await checkHealth()
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_status': {
         const result = await getStatus()
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_sources': {
         const result = await listSources()
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_capabilities': {
         const result = await getCapabilities()
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_stats': {
         const result = await getStats()
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_search': {
         const query = String(args?.query ?? '').trim()
         if (!query) {
-          write(error(id, -32602, 'query is required'))
+          mcpError(id, -32602, 'query is required')
           return
         }
         if (query.length > MAX_QUERY_LENGTH) {
-          write(error(id, -32602, `query exceeds ${MAX_QUERY_LENGTH} characters`))
+          mcpError(id, -32602, `query exceeds ${MAX_QUERY_LENGTH} characters`)
           return
         }
         const rawType = args?.type
         const limit = typeof args?.limit === 'number' ? args.limit : undefined
         const result = await search({ query, type: typeof rawType === 'string' ? rawType : undefined, limit })
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        // Always return structured output, even for empty results
+        mcpSuccess(id, {
+          ok: true,
+          hits: result.data,
+          count: result.data.length,
+          message: result.data.length === 0 ? 'No matching AKM resources found' : undefined,
+        })
         return
       }
       case 'akm_show': {
         const ref = String(args?.ref ?? '').trim()
         if (!ref) {
-          write(error(id, -32602, 'ref is required'))
+          mcpError(id, -32602, 'ref is required')
           return
         }
         if (ref.length > MAX_REF_LENGTH) {
-          write(error(id, -32602, `ref exceeds ${MAX_REF_LENGTH} characters`))
+          mcpError(id, -32602, `ref exceeds ${MAX_REF_LENGTH} characters`)
           return
         }
         const maxChars = typeof args?.max_chars === 'number' ? args.max_chars : undefined
         const result = await showResource({ ref, maxChars })
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_feedback': {
         const refFb = String(args?.ref ?? '').trim()
-        if (!refFb) { write(error(id, -32602, 'ref is required')); return }
+        if (!refFb) { mcpError(id, -32602, 'ref is required'); return }
         const positive = args?.positive === true
         const reason = typeof args?.reason === 'string' ? args.reason.slice(0, 500) : undefined
         const result = await submitFeedback(refFb, positive, reason)
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_proposal_list': {
         const status = typeof args?.status === 'string' ? args.status.trim() : undefined
         const result = await listProposals(status)
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_proposal_show': {
         const pid = String(args?.id ?? '').trim()
-        if (!pid) { write(error(id, -32602, 'id is required')); return }
+        if (!pid) { mcpError(id, -32602, 'id is required'); return }
         const result = await showProposal(pid)
-        write(success(id, result))
+        if (!result.ok) {
+          mcpSuccess(id, { ok: false, error: result.error })
+          return
+        }
+        mcpSuccess(id, result.data)
         return
       }
       case 'akm_agent_mode': {
         const mode = getAgentMode()
-        write(success(id, { ok: true, data: { mode } }))
+        mcpSuccess(id, { mode })
         return
       }
       case 'akm_agent_run_start': {
         const decision = String(args?.decision ?? '').trim()
         if (!['required', 'optional', 'skipped'].includes(decision)) {
-          write(error(id, -32602, 'decision must be required, optional, or skipped'))
+          mcpError(id, -32602, 'decision must be required, optional, or skipped')
           return
         }
         const queriesCount = typeof args?.queries_count === 'number' ? Math.min(Math.max(0, args.queries_count), 4) : 0
@@ -409,12 +468,12 @@ async function handleToolCall(
           fallback_used: false,
           duration_ms: 0,
         })
-        write(success(id, { ok: true, data: { run_id: runId } }))
+        mcpSuccess(id, { run_id: runId })
         return
       }
       case 'akm_agent_run_complete': {
         const runId = String(args?.run_id ?? '').trim()
-        if (!runId) { write(error(id, -32602, 'run_id is required')); return }
+        if (!runId) { mcpError(id, -32602, 'run_id is required'); return }
         const feedbackCount = typeof args?.feedback_count === 'number' ? Math.max(0, args.feedback_count) : 0
         const lessonCreated = args?.lesson_proposal_created === true
         const memoryCreated = args?.memory_proposal_created === true
@@ -436,7 +495,7 @@ async function handleToolCall(
             completed_at: completedAt,
           })
         }
-        write(success(id, { ok: true, data: { run_id: runId } }))
+        mcpSuccess(id, { run_id: runId })
         return
       }
       case 'akm_agent_runs': {
@@ -456,14 +515,14 @@ async function handleToolCall(
           duration_ms: r.duration_ms,
           completed_at: r.completed_at ?? null,
         }))
-        write(success(id, { ok: true, data: safe }))
+        mcpSuccess(id, safe)
         return
       }
       default:
-        write(error(id, -32601, `Unknown tool: ${name}`))
+        mcpError(id, -32601, `Unknown tool: ${name}`)
     }
   } catch (e) {
-    write(error(id, -32603, `Internal error: ${(e as Error).message}`))
+    mcpError(id, -32603, `Internal error: ${(e as Error).message}`)
   }
 }
 

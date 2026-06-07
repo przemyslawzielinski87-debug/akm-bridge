@@ -11,7 +11,7 @@ export interface AdapterSuccess<T> {
   ok: true
   data: T
   meta: AdapterMeta
-  error: null
+  error?: null | undefined
 }
 
 export interface AdapterError {
