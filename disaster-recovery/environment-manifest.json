@@ -40,7 +40,7 @@
     "files": []
   },
   "commands": {
-    "count": 22,
+    "count": 28,
     "directory": "/root/.config/opencode/commands",
     "files": [
       "brainstorm.md",
@@ -50,7 +50,7 @@
     ]
   },
   "skills": {
-    "count": 25,
+    "count": 28,
     "directory": "/root/.config/opencode/skills",
     "directories": [
       "brainstorming",

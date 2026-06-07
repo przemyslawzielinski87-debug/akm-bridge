@@ -327,7 +327,9 @@
     "templates/commands/slo.md",
     "templates/commands/load-test.md",
     "templates/skills/slo-capacity-planning/SKILL.md",
-    "docs/OPENCODE-SLO-CAPACITY-PLANNING.md"
+    "docs/OPENCODE-SLO-CAPACITY-PLANNING.md",
+    "src/slo/sli-collector.ts",
+    "src/slo/sli-store.ts"
   ],
   "runtimeChecks": [
     {

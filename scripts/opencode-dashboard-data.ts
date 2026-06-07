@@ -24,6 +24,7 @@ import type {
   TokenMetrics, ContextMetrics, PermissionMetrics,
   RecoveryStatus, UpdateStatus, E2EStatus, CIStatus,
   DRStatus, LearningStatus, SystemStatus, Alert, DashboardEvent,
+  SloStatusSection, SliSummaryStatus,
 } from '../src/dashboard/dashboard-types.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -745,6 +746,55 @@ function collectAlerts(overall: StatusSection, recovery: RecoveryStatus, system:
   return alerts
 }
 
+/* ── SLO collector ── */
+
+function collectSLO(): SloStatusSection {
+  const slis: SliSummaryStatus[] = []
+  const sliDbPath = resolve(PROJECT_ROOT, "data", "sli-store.db")
+  try {
+    if (existsSync(sliDbPath)) {
+      const { Database } = require("bun:sqlite") as typeof import("bun:sqlite")
+      const db = new Database(sliDbPath)
+      const rows = db.prepare("SELECT sli_id, sample_count, valid_count, median_ms, p95_ms, recorded_at, source FROM sli_samples ORDER BY recorded_at DESC LIMIT 100").all() as Array<{ sli_id: string, sample_count: number, valid_count: number, median_ms: number, p95_ms: number, recorded_at: string, source: string }>
+      const seen = new Set<string>()
+      for (const row of rows) {
+        if (seen.has(row.sli_id)) continue
+        seen.add(row.sli_id)
+        slis.push({
+          sliId: row.sli_id,
+          sampleCount: row.sample_count,
+          successRate: row.sample_count > 0 ? Math.round((row.valid_count / row.sample_count) * 10000) / 100 : 0,
+          median: row.median_ms,
+          p95: row.p95_ms,
+          status: row.sample_count === 0 ? "insufficient_data" : row.p95_ms < 500 ? "healthy" : row.p95_ms < 2000 ? "warning" : "critical",
+          freshnessMs: row.recorded_at ? Date.now() - new Date(row.recorded_at).getTime() : -1,
+          source: row.source,
+        })
+      }
+      db.close()
+    } else {
+      const jsonlPath = resolve(PROJECT_ROOT, "data", "sli-store.jsonl")
+      if (existsSync(jsonlPath)) {
+        const lines = readFileSync(jsonlPath, "utf-8").trim().split("\n")
+        for (const line of lines.slice(-100)) {
+          try { JSON.parse(line) } catch { continue }
+        }
+      }
+    }
+  } catch {
+  }
+  const healthy = slis.filter((s) => s.status === "healthy").length
+  const warning = slis.filter((s) => s.status === "warning").length
+  const critical = slis.filter((s) => s.status === "critical" || s.status === "insufficient_data").length
+  const overall = critical > 0 ? "degraded" : warning > 0 ? "degraded" : healthy > 0 ? "healthy" : "unknown"
+  return {
+    status: overall,
+    slis,
+    updatedAt: new Date().toISOString(),
+    errorBudgetSummary: { total: slis.length, healthy, warning, exhausted: critical },
+  }
+}
+
 /* ── Main collector ── */
 
 export function collectDashboardData(): DashboardData {
@@ -763,6 +813,7 @@ export function collectDashboardData(): DashboardData {
   const dr = collectDR()
   const learning = collectLearning()
   const system = collectSystem()
+  const slo = collectSLO()
 
   const componentStatuses = [
     agents.status,
@@ -817,6 +868,7 @@ export function collectDashboardData(): DashboardData {
     tokens,
     context,
     permissions,
+    slo,
     recovery,
     updates,
     e2e,

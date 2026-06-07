@@ -10,37 +10,23 @@ function loadPolicy() {
   return JSON.parse(readFileSync(path, "utf-8"));
 }
 
-function loadPerformanceBaseline() {
-  const path = resolve(root, "performance/baseline.json");
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf-8"));
-}
-
-function loadCapacityBaseline() {
-  const path = resolve(root, "performance/capacity-baseline.json");
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf-8"));
+interface BudgetEntry {
+  sloId: string;
+  sliId: string;
+  targetPercent: number;
+  budgetPercentPerWindow: number;
+  status: string;
+  totalBudget: number;
+  consumedPercent: number;
+  remainingPercent: number;
+  source: string;
 }
 
 interface BudgetReport {
   timestamp: string;
   window: string;
-  policies: Array<{
-    sloId: string;
-    sliId: string;
-    targetPercent: number;
-    budgetPercentPerWindow: number;
-    status: string;
-    totalBudget: number;
-    consumedPercent: number;
-    remainingPercent: number;
-  }>;
-  summary: {
-    total: number;
-    healthy: number;
-    warning: number;
-    exhausted: number;
-  };
+  policies: BudgetEntry[];
+  summary: { total: number; healthy: number; warning: number; exhausted: number };
 }
 
 function now(): string {
@@ -52,40 +38,116 @@ const windowFlag = args.find((a) => a.startsWith("--window"));
 const windowHours = windowFlag ? parseInt(windowFlag.split("=")[1], 10) || 24 : 24;
 
 const policy = loadPolicy();
-const perfBaseline = loadPerformanceBaseline();
-const capBaseline = loadCapacityBaseline();
 
-const slos: Array<{
-  sloId: string;
-  sliId: string;
-  targetPercent: number;
-  budgetPercentPerWindow: number;
-}> = policy.slos || [];
+const sliToSloMap: Record<string, string> = {};
+for (const slo of policy.slos || []) {
+  sliToSloMap[slo.sliId] = slo.id;
+}
 
-const budgets = slos.map((slo) => {
-  const budgetPercent = slo.budgetPercentPerWindow || 5;
-  const totalBudget = Math.round(
-    (budgetPercent / 100) * 86400000 * (windowHours / 24)
-  );
-  const consumedPercent = Math.random() * 30;
-  const status =
-    consumedPercent >= 100
-      ? "exhausted"
-      : consumedPercent >= budgetPercent * 0.7
-        ? "warning"
-        : "healthy";
+const sliSources: Record<string, () => { successRate: number; count: number }> = {
+  "task-create-latency": () => {
+    try {
+      const { collectTaskLatency, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectTaskLatency(50);
+      const summary = computeSliSummary(result.samples.filter((s: { sliId: string }) => s.sliId === "task-create-latency"));
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+  "queue-pickup-latency": () => {
+    try {
+      const { collectTaskLatency, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectTaskLatency(50);
+      const summary = computeSliSummary(result.samples.filter((s: { sliId: string }) => s.sliId === "queue-pickup-latency"));
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+  "notification-dispatch-latency": () => {
+    try {
+      const { collectNotificationLatency, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectNotificationLatency(50);
+      const summary = computeSliSummary(result.samples);
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+  "scheduler-scan-latency": () => {
+    try {
+      const { collectScheduleLatency, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectScheduleLatency(50);
+      const summary = computeSliSummary(result.samples);
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+  "mcp-success-rate": () => {
+    try {
+      const { collectWriteAuditLatency, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectWriteAuditLatency(50);
+      const summary = computeSliSummary(result.samples);
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+  "dashboard-availability": () => {
+    try {
+      const { collectAvailability, computeSliSummary } = require(resolve(root, "src/slo/sli-collector.js"));
+      const result = collectAvailability();
+      const summary = computeSliSummary(result.samples);
+      return { successRate: summary.successRate, count: summary.sampleCount };
+    } catch {
+      return { successRate: 0, count: 0 };
+    }
+  },
+};
 
-  return {
-    sloId: slo.sloId,
-    sliId: slo.sliId,
-    targetPercent: slo.targetPercent,
-    budgetPercentPerWindow: budgetPercent,
-    status,
-    totalBudget,
-    consumedPercent: Math.round(consumedPercent * 100) / 100,
-    remainingPercent: Math.round((100 - consumedPercent) * 100) / 100,
-  };
-});
+const budgets: BudgetEntry[] = (policy.slos || []).map(
+  (slo: { sloId: string; sliId: string; targetPercent: number; budgetPercentPerWindow: number }) => {
+    const budgetPercent = slo.budgetPercentPerWindow || 5;
+    const totalBudget = Math.round(
+      (budgetPercent / 100) * 86400000 * (windowHours / 24)
+    );
+    const collector = sliSources[slo.sliId];
+    let consumedPercent = 0;
+    let source = "no_data";
+    if (collector) {
+      const data = collector();
+      source = data.count > 0 ? "real" : "no_data";
+      if (data.count > 0 && data.successRate < 100) {
+        consumedPercent = Math.max(0, ((100 - data.successRate) / 100) * 100);
+      } else if (data.count > 0) {
+        consumedPercent = data.successRate >= slo.targetPercent ? 0 : 10;
+      }
+    }
+    let status: string;
+    if (source === "no_data") {
+      status = "insufficient_data";
+    } else if (consumedPercent >= 100) {
+      status = "exhausted";
+    } else if (consumedPercent >= budgetPercent * 0.7) {
+      status = "warning";
+    } else {
+      status = "healthy";
+    }
+    return {
+      sloId: slo.sloId || slo.sliId,
+      sliId: slo.sliId,
+      targetPercent: slo.targetPercent,
+      budgetPercentPerWindow: budgetPercent,
+      status,
+      totalBudget,
+      consumedPercent: Math.round(consumedPercent * 100) / 100,
+      remainingPercent: Math.round(Math.max(0, 100 - consumedPercent) * 100) / 100,
+      source,
+    };
+  }
+);
 
 const report: BudgetReport = {
   timestamp: now(),
@@ -110,9 +172,11 @@ if (args.includes("--json")) {
         ? "✓"
         : b.status === "warning"
           ? "⚠"
-          : "✗";
+          : b.status === "exhausted"
+            ? "✗"
+            : "?";
     console.log(
-      `  ${icon} ${b.sloId}: ${b.consumedPercent}% consumed (budget: ${b.budgetPercentPerWindow}%)`
+      `  ${icon} ${b.sloId}: ${b.consumedPercent}% consumed (${b.source})`
     );
   }
   console.log("─".repeat(60));

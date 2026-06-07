@@ -203,6 +203,24 @@ export interface LearningStatus {
   updatedAt: string
 }
 
+export interface SliSummaryStatus {
+  sliId: string
+  sampleCount: number
+  successRate: number
+  median: number
+  p95: number
+  status: string
+  freshnessMs: number
+  source: string
+}
+
+export interface SloStatusSection {
+  status: ComponentStatus
+  slis: SliSummaryStatus[]
+  updatedAt: string
+  errorBudgetSummary: { total: number; healthy: number; warning: number; exhausted: number }
+}
+
 export interface SystemStatus {
   hostname: string
   platform: string
@@ -281,6 +299,7 @@ export interface DashboardData {
   context: ContextMetrics
   permissions: PermissionMetrics
 
+  slo: SloStatusSection
   recovery: RecoveryStatus
   updates: UpdateStatus
   e2e: E2EStatus
