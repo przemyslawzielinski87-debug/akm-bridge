@@ -1,0 +1,91 @@
+{
+  "id": "the-meridian",
+  "name": "The Meridian",
+  "description": "WordPress production theme, plugins, and infrastructure",
+  "defaultBranch": "main",
+  "allowedBranches": ["main", "staging", "develop", "feature/*", "fix/*"],
+  "projectType": "wordpress",
+  "enabled": true,
+  "environments": {
+    "local": {
+      "writePolicy": "allow",
+      "deployPolicy": "allow",
+      "backupRequired": false,
+      "healthChecks": false
+    },
+    "staging": {
+      "writePolicy": "allow",
+      "deployPolicy": "ask",
+      "backupRequired": true,
+      "healthChecks": true
+    },
+    "production": {
+      "writePolicy": "ask",
+      "deployPolicy": "double",
+      "approvalRequired": true,
+      "backupRequired": true,
+      "rollbackRequired": true,
+      "healthChecks": true,
+      "maintenanceWindow": "sunday 02:00-04:00 UTC"
+    }
+  },
+  "agents": [
+    "meridian-dev",
+    "infra-ops",
+    "reviewer",
+    "security-auditor",
+    "release-manager",
+    "researcher",
+    "wordpress-specialist",
+    "akm-build"
+  ],
+  "commands": [
+    "/brainstorm",
+    "/meridian-audit",
+    "/meridian-fix",
+    "/production-check",
+    "/review",
+    "/commit-safe",
+    "/system-check",
+    "/learn"
+  ],
+  "skills": [
+    "meridian-deploy",
+    "meridian-quick-fix",
+    "meridian-wordpress-development",
+    "meridian-visual-regression",
+    "production-safety",
+    "production-health-check",
+    "cloudflare-coolify-routing",
+    "nginx-incident-response",
+    "wordpress-safe-content-update",
+    "post-task-learning",
+    "brainstorming",
+    "multi-project-governance"
+  ],
+  "mcpServers": ["filesystem-project", "github", "playwright", "akm-bridge", "lean-ctx"],
+  "akm": {
+    "projectNamespace": "the-meridian",
+    "globalFallback": true
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "deploy": true,
+    "admin": false,
+    "shell": false
+  },
+  "budgets": {
+    "dailyReadTokens": 500000,
+    "dailyWriteTokens": 200000,
+    "maxTokensPerTask": 50000,
+    "maxToolCallsPerTask": 200,
+    "maxDurationMinutes": 60,
+    "maxConcurrentTasks": 3
+  },
+  "gitPolicy": {
+    "forcePushBlocked": true,
+    "requireReview": true,
+    "allowedActions": ["commit", "push", "merge", "rebase"]
+  }
+}

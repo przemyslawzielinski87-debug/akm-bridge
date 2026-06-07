@@ -1,0 +1,150 @@
+{
+  "id": "the-meridian",
+  "name": "The Meridian",
+  "description": "WordPress production site — theme, plugins, MU-plugins, Nginx, PHP-FPM, Cloudflare, Coolify, production safety, visual regression, content updates",
+  "repositoryPath": "",
+  "repositoryRemote": "origin",
+  "defaultBranch": "main",
+  "allowedBranches": ["main", "develop", "staging", "feat/*", "fix/*", "hotfix/*"],
+  "projectType": "wordpress",
+  "enabled": true,
+  "environments": {
+    "local": {
+      "writePolicy": "allow",
+      "approvalPolicy": "none",
+      "healthCheckRequired": false,
+      "backupRequired": false,
+      "rollbackRequired": false
+    },
+    "staging": {
+      "writePolicy": "allow",
+      "approvalPolicy": "single",
+      "healthCheckRequired": true,
+      "backupRequired": true,
+      "rollbackRequired": true
+    },
+    "production": {
+      "writePolicy": "ask",
+      "approvalPolicy": "double",
+      "healthCheckRequired": true,
+      "backupRequired": true,
+      "rollbackRequired": true,
+      "maintenanceWindows": [
+        { "start": "02:00", "end": "05:00", "tz": "Europe/Warsaw" }
+      ]
+    }
+  },
+  "agents": [
+    "meridian-dev",
+    "infra-ops",
+    "reviewer",
+    "security-auditor",
+    "release-manager",
+    "researcher",
+    "wordpress-specialist",
+    "akm-build"
+  ],
+  "commands": [
+    "/brainstorm",
+    "/review",
+    "/projects",
+    "/meridian-audit",
+    "/meridian-fix",
+    "/production-check",
+    "/commit-safe",
+    "/system-check",
+    "/learn"
+  ],
+  "skills": [
+    "brainstorming",
+    "meridian-quick-fix",
+    "meridian-deploy",
+    "production-safety",
+    "token-efficient-debug",
+    "mcp-diagnostics"
+  ],
+  "mcpServers": ["akm-bridge", "lean-ctx", "filesystem", "playwright"],
+  "mcpTools": [
+    "akm-bridge_akm_search",
+    "akm-bridge_akm_show",
+    "lean-ctx_ctx_read",
+    "lean-ctx_ctx_search",
+    "lean-ctx_ctx_shell",
+    "lean-ctx_ctx_tree",
+    "playwright_browser_navigate",
+    "playwright_browser_snapshot",
+    "playwright_browser_screenshot",
+    "filesystem-project_read_text_file",
+    "filesystem-project_search_files",
+    "filesystem-project_directory_tree"
+  ],
+  "akm": {
+    "namespaces": ["the-meridian"],
+    "sources": ["docs", "theme", "plugins"],
+    "tags": ["wordpress", "theme", "production", "deployment"],
+    "collections": ["meridian-docs", "meridian-architecture", "meridian-deploy"],
+    "searchFirstInProject": true,
+    "allowGlobalFallback": true
+  },
+  "permissions": {
+    "read": "allow",
+    "write": "allow",
+    "deploy": "ask",
+    "admin": "deny",
+    "shell": "deny",
+    "gitPush": "allow",
+    "gitForcePush": "deny"
+  },
+  "budgets": {
+    "dailyTokensRead": 500000,
+    "dailyTokensWrite": 200000,
+    "weeklyTokensRead": 3000000,
+    "weeklyTokensWrite": 1000000,
+    "maxTokensPerTask": 150000,
+    "maxToolCallsPerTask": 150,
+    "maxDurationPerTaskMs": 300000,
+    "maxConcurrentTasks": 2,
+    "maxScheduledRunsPerDay": 24,
+    "softWarningPct": 80
+  },
+  "concurrency": {
+    "maxReadTasks": 2,
+    "maxWriteTasks": 1,
+    "queuePolicy": "priority"
+  },
+  "gitPolicy": {
+    "allowedBranches": ["main", "develop", "staging", "feat/*", "fix/*", "hotfix/*"],
+    "requirePullRequest": true,
+    "requireApproval": true,
+    "forbidForcePush": true,
+    "requireUpToDate": true,
+    "commitSigningRequired": false
+  },
+  "deploymentPolicy": {
+    "requireBackup": true,
+    "requireHealthCheck": true,
+    "requireApproval": true,
+    "approvalCount": 2,
+    "canaryEnabled": true,
+    "rollbackEnabled": true,
+    "maxRetries": 2
+  },
+  "schedules": [],
+  "observability": {
+    "metricsRetentionDays": 90,
+    "alertOnFailure": true,
+    "alertOnBudgetExceeded": true,
+    "dailyDigest": true,
+    "weeklyDigest": true,
+    "logLevel": "debug"
+  },
+  "backupPolicy": {
+    "repositoryBackup": true,
+    "databaseBackup": true,
+    "uploadsBackup": true,
+    "secretsBackup": true,
+    "rtoMinutes": 30,
+    "rpoMinutes": 15,
+    "backupRetentionDays": 90
+  }
+}

@@ -33,6 +33,18 @@ import {
   checkIdempotency,
   registerIdempotencyKey,
 } from './task-validator.js'
+import {
+  projectRegistry,
+  getProjectLocks,
+  checkPermission,
+  checkAgentAllowed,
+  checkCommandAllowed,
+  getBudgetStatus,
+  ALLOWED_GLOBAL_COMMANDS,
+  acquireLock,
+  releaseLock,
+  clearExpiredLocks,
+} from '../projects/index.js'
 import { NotificationStore } from '../notifications/notification-store.js'
 import { buildManagerFromEnv } from '../notifications/notification-manager.js'
 import { buildNotificationRoutes } from '../notifications/notification-api.js'
@@ -536,18 +548,7 @@ const server = Bun.serve({
         }, 200, req)
       }
 
-      // List tasks (paginated)
-      if (path === '/api/tasks') {
-        const session = requireAuth(req)
-        if (!session) return errorResponse('Unauthorized', 401, req)
-        const status = url.searchParams.get('status') ?? undefined
-        const project = url.searchParams.get('project') ?? undefined
-        const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '50'), 200)
-        const offset = parseInt(url.searchParams.get('offset') ?? '0')
-        const tasks = store.listTasks({ status, project, limit, offset })
-        logRequest(method, path, 200, ip)
-        return json({ ok: true, data: tasks, limit, offset }, 200, req)
-      }
+      
 
       // Get task details
       if (path.match(/^\/api\/tasks\/[^/]+$/) && !path.includes('/events') && !path.includes('/artifacts')) {
@@ -584,18 +585,93 @@ const server = Bun.serve({
         return json({ ok: true, data: approvals }, 200, req)
       }
 
-      // List allowed projects
+      // List allowed projects (from registry)
       if (path === '/api/projects') {
         const session = requireAuth(req)
         if (!session) return errorResponse('Unauthorized', 401, req)
         logRequest(method, path, 200, ip)
+        const allProfiles = projectRegistry.getEnabledProfiles()
         return json({
           ok: true,
-          data: [
-            { id: '/root/projekt/akm-bridge', name: 'AKM Bridge' },
-            { id: '/root/projekt/strategikon', name: 'Strategikon' },
-          ],
+          data: allProfiles.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            projectType: p.projectType,
+            environments: Object.keys(p.environments),
+            agents: p.agents,
+            commands: p.commands,
+            skills: p.skills,
+            defaultBranch: p.defaultBranch,
+          })),
         }, 200, req)
+      }
+
+      // Get project detail
+      if (path.match(/^\/api\/projects\/[^/]+$/)) {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const projectId = path.split('/')[3]
+        const profile = projectRegistry.getProfile(projectId)
+        if (!profile) return errorResponse('Project not found', 404, req)
+        const budget = getBudgetStatus(profile)
+        const locks = getProjectLocks(profile.id)
+        logRequest(method, path, 200, ip)
+        return json({
+          ok: true,
+          data: {
+            id: profile.id,
+            name: profile.name,
+            description: profile.description,
+            projectType: profile.projectType,
+            enabled: profile.enabled,
+            environments: profile.environments,
+            agents: profile.agents,
+            commands: profile.commands,
+            skills: profile.skills,
+            permissions: profile.permissions,
+            budget,
+            locks,
+            defaultBranch: profile.defaultBranch,
+          },
+        }, 200, req)
+      }
+
+      // Project budget status
+      if (path.match(/^\/api\/projects\/[^/]+\/budget$/)) {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const projectId = path.split('/')[3]
+        const profile = projectRegistry.getProfile(projectId)
+        if (!profile) return errorResponse('Project not found', 404, req)
+        const budget = getBudgetStatus(profile)
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, data: budget }, 200, req)
+      }
+
+      // Project locks
+      if (path === '/api/project-locks') {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const projectId = url.searchParams.get('project') ?? undefined
+        clearExpiredLocks()
+        const locks = getProjectLocks(projectId)
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, data: locks }, 200, req)
+      }
+
+      // Tasks filtered by environment
+      if (path === '/api/tasks') {
+        const session = requireAuth(req)
+        if (!session) return errorResponse('Unauthorized', 401, req)
+        const status = url.searchParams.get('status') ?? undefined
+        const project = url.searchParams.get('project') ?? undefined
+        const environment = url.searchParams.get('environment') ?? undefined
+        const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '50'), 200)
+        const offset = parseInt(url.searchParams.get('offset') ?? '0')
+        const tasks = store.listTasks({ status, project, environment, limit, offset })
+        logRequest(method, path, 200, ip)
+        return json({ ok: true, data: tasks, limit, offset }, 200, req)
       }
     }
 
@@ -632,6 +708,29 @@ const server = Bun.serve({
             idempotency_key?: string
             dry_run?: boolean
             read_only?: boolean
+            environment?: string
+          }
+
+          // Resolve project from registry
+          const projectPath = body.project ?? ''
+          const resolved = projectRegistry.resolveProject(projectPath)
+          const projectId = resolved?.profile.id ?? 'unclassified'
+          const environment = body.environment ?? 'local'
+
+          // Validate agent against project profile
+          if (body.agent && resolved) {
+            const agentCheck = checkAgentAllowed(resolved.profile, body.agent)
+            if (!agentCheck.allowed) {
+              return errorResponse(agentCheck.reason!, 403, req)
+            }
+          }
+
+          // Validate command against project profile
+          if (body.command && resolved) {
+            const cmdCheck = checkCommandAllowed(resolved.profile, body.command)
+            if (!cmdCheck.allowed) {
+              return errorResponse(cmdCheck.reason!, 403, req)
+            }
           }
 
           // Idempotency check
@@ -646,13 +745,14 @@ const server = Bun.serve({
           }
 
           const validation = validateTask({
-            project: body.project ?? '',
+            project: projectPath,
             agent: body.agent,
             cmd: body.command,
             prompt_summary: body.prompt_summary ?? '',
             full_prompt: body.full_prompt,
             created_by: session.userId,
             idempotency_key: body.idempotency_key,
+            environment,
           })
 
           if (!validation.valid) {
@@ -663,10 +763,37 @@ const server = Bun.serve({
             )
           }
 
+          // Check project lock for write tasks
+          if (!body.read_only && !body.dry_run && resolved) {
+            const envName = environment as any
+            const lockResult = acquireLock(
+              resolved.profile,
+              envName,
+              taskId,
+              'write',
+              600_000
+            )
+            if (!lockResult.acquired) {
+              return errorResponse(lockResult.reason ?? 'Project is locked', 423, req)
+            }
+          }
+
+          // Check budget
+          if (resolved) {
+            const budgetCheck = await import('../projects/index.js').then(
+              (m) => m.checkBudget(resolved.profile, 1000, 4000, !body.read_only)
+            )
+            if (!budgetCheck.allowed) {
+              return errorResponse(budgetCheck.reason ?? 'Budget exceeded', 429, req)
+            }
+          }
+
           const taskId = randomUUID()
           const task = store.createTask({
             id: taskId,
-            project: body.project!,
+            project: projectPath,
+            project_id: projectId,
+            environment,
             agent: body.agent,
             command: body.command,
             prompt_summary: body.prompt_summary!,
@@ -674,7 +801,7 @@ const server = Bun.serve({
             priority: body.priority ?? 'normal',
             created_by: session.userId,
             idempotency_key: body.idempotency_key,
-            project_lock: body.project,
+            project_lock: projectId,
           })
 
           if (body.idempotency_key) {

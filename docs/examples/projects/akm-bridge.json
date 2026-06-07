@@ -1,0 +1,80 @@
+{
+  "id": "akm-bridge",
+  "name": "akm-bridge",
+  "description": "OpenCode infrastructure: MCP bridge, agents, commands, skills, dashboard, scheduler, CI",
+  "defaultBranch": "main",
+  "allowedBranches": ["main", "develop"],
+  "projectType": "infrastructure",
+  "enabled": true,
+  "environments": {
+    "local": {
+      "writePolicy": "allow",
+      "deployPolicy": "allow",
+      "backupRequired": false,
+      "healthChecks": false
+    }
+  },
+  "agents": [
+    "akm-build",
+    "infra-ops",
+    "reviewer",
+    "security-auditor",
+    "researcher",
+    "release-manager"
+  ],
+  "commands": [
+    "/audit-opencode",
+    "/brainstorm",
+    "/check-services",
+    "/commit-safe",
+    "/context-audit",
+    "/deploy-safe",
+    "/learn",
+    "/mcp-check",
+    "/production-check",
+    "/projects",
+    "/recover",
+    "/review",
+    "/review-last-change",
+    "/security-scan"
+  ],
+  "skills": [
+    "mcp-diagnostics",
+    "context-efficiency-audit",
+    "safe-recovery",
+    "safe-project-audit",
+    "secret-safe-audit",
+    "rollback-change",
+    "safe-git-release",
+    "post-task-learning",
+    "production-safety",
+    "token-efficient-debug",
+    "brainstorming",
+    "multi-project-governance"
+  ],
+  "mcpServers": ["filesystem-project", "github", "lean-ctx", "akm-bridge", "sequential-thinking", "playwright", "context7"],
+  "akm": {
+    "projectNamespace": "akm-bridge",
+    "globalFallback": true
+  },
+  "permissions": {
+    "read": true,
+    "write": true,
+    "deploy": true,
+    "admin": true,
+    "shell": true
+  },
+  "budgets": {
+    "dailyReadTokens": 500000,
+    "dailyWriteTokens": 300000,
+    "maxTokensPerTask": 75000,
+    "maxToolCallsPerTask": 300,
+    "maxDurationMinutes": 120,
+    "maxConcurrentTasks": 5
+  },
+  "gitPolicy": {
+    "forcePushBlocked": true,
+    "requireReview": false,
+    "allowedActions": ["commit", "push", "merge"]
+  }
+}

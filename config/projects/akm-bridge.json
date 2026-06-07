@@ -1,0 +1,136 @@
+{
+  "id": "akm-bridge",
+  "name": "AKM Bridge Infrastructure",
+  "description": "OpenCode integrations, MCP bridge, agents, commands, skills, dashboard, scheduler, notifications, recovery, bootstrap, CI",
+  "repositoryPath": "",
+  "repositoryRemote": "origin",
+  "defaultBranch": "main",
+  "allowedBranches": ["main", "develop", "feat/*", "fix/*", "chore/*"],
+  "projectType": "infrastructure",
+  "enabled": true,
+  "environments": {
+    "local": {
+      "writePolicy": "allow",
+      "approvalPolicy": "none",
+      "healthCheckRequired": false,
+      "backupRequired": false,
+      "rollbackRequired": false
+    },
+    "staging": {
+      "writePolicy": "ask",
+      "approvalPolicy": "single",
+      "healthCheckRequired": true,
+      "backupRequired": true,
+      "rollbackRequired": true
+    },
+    "production": {
+      "writePolicy": "ask",
+      "approvalPolicy": "double",
+      "healthCheckRequired": true,
+      "backupRequired": true,
+      "rollbackRequired": true
+    }
+  },
+  "agents": [
+    "akm-build",
+    "infra-ops",
+    "reviewer",
+    "security-auditor",
+    "release-manager",
+    "researcher",
+    "meridian-dev"
+  ],
+  "commands": [
+    "/brainstorm",
+    "/review",
+    "/projects",
+    "/system-check",
+    "/learn",
+    "/commit-safe"
+  ],
+  "skills": [
+    "brainstorming",
+    "token-efficient-debug",
+    "mcp-diagnostics",
+    "meridian-quick-fix",
+    "customize-opencode"
+  ],
+  "mcpServers": ["akm-bridge", "lean-ctx", "filesystem"],
+  "mcpTools": [
+    "akm-bridge_akm_search",
+    "akm-bridge_akm_show",
+    "lean-ctx_ctx_read",
+    "lean-ctx_ctx_search",
+    "lean-ctx_ctx_shell",
+    "lean-ctx_ctx_tree"
+  ],
+  "akm": {
+    "namespaces": ["akm-bridge"],
+    "sources": ["docs", "src", "config"],
+    "tags": ["infrastructure", "opencode", "mcp"],
+    "collections": ["akm-bridge-docs", "akm-bridge-architecture"],
+    "searchFirstInProject": true,
+    "allowGlobalFallback": true
+  },
+  "permissions": {
+    "read": "allow",
+    "write": "allow",
+    "deploy": "ask",
+    "admin": "deny",
+    "shell": "deny",
+    "gitPush": "allow",
+    "gitForcePush": "deny"
+  },
+  "budgets": {
+    "dailyTokensRead": 500000,
+    "dailyTokensWrite": 300000,
+    "weeklyTokensRead": 3000000,
+    "weeklyTokensWrite": 1500000,
+    "maxTokensPerTask": 200000,
+    "maxToolCallsPerTask": 200,
+    "maxDurationPerTaskMs": 600000,
+    "maxConcurrentTasks": 3,
+    "maxScheduledRunsPerDay": 48,
+    "softWarningPct": 80
+  },
+  "concurrency": {
+    "maxReadTasks": 3,
+    "maxWriteTasks": 1,
+    "queuePolicy": "priority"
+  },
+  "gitPolicy": {
+    "allowedBranches": ["main", "develop", "feat/*", "fix/*", "chore/*"],
+    "requirePullRequest": false,
+    "requireApproval": false,
+    "forbidForcePush": true,
+    "requireUpToDate": true,
+    "commitSigningRequired": false
+  },
+  "deploymentPolicy": {
+    "requireBackup": true,
+    "requireHealthCheck": true,
+    "requireApproval": true,
+    "approvalCount": 1,
+    "canaryEnabled": false,
+    "rollbackEnabled": true,
+    "maxRetries": 2
+  },
+  "schedules": [],
+  "observability": {
+    "metricsRetentionDays": 30,
+    "alertOnFailure": true,
+    "alertOnBudgetExceeded": true,
+    "dailyDigest": true,
+    "weeklyDigest": true,
+    "logLevel": "info"
+  },
+  "backupPolicy": {
+    "repositoryBackup": true,
+    "databaseBackup": true,
+    "uploadsBackup": false,
+    "secretsBackup": false,
+    "rtoMinutes": 60,
+    "rpoMinutes": 60,
+    "backupRetentionDays": 30
+  }
+}

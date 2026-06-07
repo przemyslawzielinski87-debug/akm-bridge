@@ -113,6 +113,11 @@
       "name": "/brainstorm",
       "agent": "explore",
       "file": "/root/.config/opencode/commands/brainstorm.md"
+    },
+    {
+      "name": "/projects",
+      "agent": "explore",
+      "file": "/root/.config/opencode/commands/projects.md"
     }
   ],
   "skills": [
@@ -195,6 +200,10 @@
     {
       "name": "brainstorming",
       "file": "/root/.config/opencode/skills/brainstorming/SKILL.md"
+    },
+    {
+      "name": "multi-project-governance",
+      "file": "/root/.config/opencode/skills/multi-project-governance/SKILL.md"
     }
   ],
   "mcpServers": [
@@ -262,6 +271,7 @@
     "/root/.config/opencode/commands/review.md",
     "/root/.config/opencode/commands/security-scan.md",
     "/root/.config/opencode/commands/brainstorm.md",
+    "/root/.config/opencode/commands/projects.md",
     "/root/.config/opencode/skills/cloudflare-coolify-routing/SKILL.md",
     "/root/.config/opencode/skills/context-efficiency-audit/SKILL.md",
     "/root/.config/opencode/skills/git-safe-workflow/SKILL.md",
@@ -281,7 +291,8 @@
     "/root/.config/opencode/skills/secret-safe-audit/SKILL.md",
     "/root/.config/opencode/skills/token-efficient-debug/SKILL.md",
     "/root/.config/opencode/skills/wordpress-safe-content-update/SKILL.md",
-    "/root/.config/opencode/skills/brainstorming/SKILL.md"
+"/root/.config/opencode/skills/brainstorming/SKILL.md",
+    "/root/.config/opencode/skills/multi-project-governance/SKILL.md"
   ],
   "runtimeChecks": [
     {
@@ -294,7 +305,7 @@
     },
     {
       "id": "commands-visible",
-      "description": "All 15 command .md files are present and discoverable in /root/.config/opencode/commands/"
+      "description": "All 16 command .md files are present and discoverable in /root/.config/opencode/commands/"
     },
     {
       "id": "mcp-initialize",
@@ -339,6 +350,50 @@
     {
       "id": "brainstorming-no-superpowers",
       "description": "Full Superpowers plugin is not installed; brainstorming skill is standalone"
+    },
+    {
+      "id": "multi-project-governance-skill-exists",
+      "description": "multi-project-governance skill is discoverable with valid YAML frontmatter"
+    },
+    {
+      "id": "projects-command-exists",
+      "description": "/projects command is discoverable with valid markdown frontmatter"
+    },
+    {
+      "id": "multi-project-profile-registry",
+      "description": "config/projects/ contains index.json and profile JSON files for configured projects"
+    },
+    {
+      "id": "multi-project-unclassified-fallback",
+      "description": "Unclassified project profile enforces read-only: no write, deploy, admin, or shell"
+    },
+    {
+      "id": "multi-project-agent-scoping",
+      "description": "Backend enforces agent allowlist per project profile; unauthorized agents are blocked"
+    },
+    {
+      "id": "multi-project-command-scoping",
+      "description": "Backend enforces command allowlist per project profile; unauthorized commands are blocked"
+    },
+    {
+      "id": "multi-project-filesystem-isolation",
+      "description": "Filesystem path validation blocks path traversal and symlink escape"
+    },
+    {
+      "id": "multi-project-budget",
+      "description": "Project budgets enforce soft warning at 80% and hard limit at max tokens"
+    },
+    {
+      "id": "multi-project-locks",
+      "description": "Write locks prevent concurrent write tasks; second write task is blocked or queued"
+    },
+    {
+      "id": "multi-project-environment-isolation",
+      "description": "Environments are isolated; staging tasks cannot perform production writes"
+    },
+    {
+      "id": "multi-project-no-superpowers",
+      "description": "Full Superpowers plugin is not installed; all governance is standalone"
     }
   ]
 }

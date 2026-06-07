@@ -614,3 +614,190 @@ describe("Brainstorming Skill", () => {
     expect(content).not.toContain("tdd-workflow");
   });
 });
+
+// --- Multi-Project Governance Skill ---
+
+describe("Multi-Project Governance Skill", () => {
+  const skillDir = path.join(TEMPLATES, "skills", "multi-project-governance");
+  const skillFile = path.join(skillDir, "SKILL.md");
+  const cmdFile = path.join(TEMPLATES, "commands", "projects.md");
+  const profileDir = path.join(ROOT, "config", "projects");
+
+  it("skill template directory exists", () => {
+    expect(exists(skillDir)).toBe(true);
+  });
+
+  it("skill template file exists", () => {
+    expect(exists(skillFile)).toBe(true);
+  });
+
+  it("skill has valid YAML frontmatter", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content.startsWith("---")).toBe(true);
+    const endFm = content.indexOf("---", 3);
+    expect(endFm).toBeGreaterThan(3);
+    const frontmatter = content.substring(4, endFm);
+    expect(frontmatter).toContain("name: multi-project-governance");
+    expect(frontmatter).toContain("description:");
+  });
+
+  it("skill mentions project profiles", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Project Profile");
+    expect(content).toContain("Profile");
+  });
+
+  it("skill mentions permissions resolution", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Permission Resolution");
+  });
+
+  it("skill mentions environment isolation", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Environment Isolation");
+  });
+
+  it("skill mentions filesystem isolation", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Filesystem Isolation");
+    expect(content).toContain("block traversal");
+  });
+
+  it("skill mentions agent routing", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Agent Routing");
+  });
+
+  it("skill mentions AKM namespaces", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("AKM Namespace");
+  });
+
+  it("skill mentions budget enforcement", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Budget Enforcement");
+  });
+
+  it("skill mentions locking", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Locking");
+  });
+
+  it("skill has handoff section", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Handoff");
+  });
+
+  it("skill has prohibitions section", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).toContain("Prohibition");
+  });
+
+  it("command template exists", () => {
+    expect(exists(cmdFile)).toBe(true);
+  });
+
+  it("command has valid markdown structure", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("# Command: /projects");
+    expect(content).toContain("## Purpose");
+    expect(content).toContain("## Agent");
+    expect(content).toContain("## Safety");
+    expect(content).toContain("## AKM");
+  });
+
+  it("command references explore agent", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("explore");
+  });
+
+  it("command enforces read-only with admin guard for writes", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("Read-only");
+    expect(content).toContain("admin");
+    expect(content).toContain("double confirmation");
+  });
+
+  it("command supports list status show budget locks", () => {
+    if (!exists(cmdFile)) return;
+    const content = fs.readFileSync(cmdFile, "utf-8");
+    expect(content).toContain("--list");
+    expect(content).toContain("--status");
+    expect(content).toContain("--show");
+    expect(content).toContain("--budget");
+    expect(content).toContain("--locks");
+  });
+
+  it("profile registry directory exists", () => {
+    expect(exists(profileDir)).toBe(true);
+  });
+
+  it("profile registry has index.json", () => {
+    expect(exists(path.join(profileDir, "index.json"))).toBe(true);
+  });
+
+  it("profile index contains expected projects", () => {
+    if (!exists(path.join(profileDir, "index.json"))) return;
+    const index = readJson(path.join(profileDir, "index.json"));
+    expect(Array.isArray(index)).toBe(true);
+    expect(index).toContain("akm-bridge");
+    expect(index).toContain("the-meridian");
+    expect(index).toContain("unclassified");
+  });
+
+  it("unclassified profile exists and is read-only", () => {
+    const file = path.join(profileDir, "unclassified.json");
+    if (!exists(file)) return;
+    const profile = readJson(file);
+    expect(profile.permissions.write).toBe("deny");
+    expect(profile.permissions.deploy).toBe("deny");
+    expect(profile.permissions.admin).toBe("deny");
+    expect(profile.permissions.shell).toBe("deny");
+  });
+
+  it("akm-bridge profile has expected agents", () => {
+    const file = path.join(profileDir, "akm-bridge.json");
+    if (!exists(file)) return;
+    const profile = readJson(file);
+    expect(profile.agents).toContain("akm-build");
+    expect(profile.agents).toContain("infra-ops");
+  });
+
+  it("the-meridian profile has expected agents", () => {
+    const file = path.join(profileDir, "the-meridian.json");
+    if (!exists(file)) return;
+    const profile = readJson(file);
+    expect(profile.agents).toContain("meridian-dev");
+    expect(profile.agents).toContain("wordpress-specialist");
+  });
+
+  it("the-meridian profile has production environment with double approval", () => {
+    const file = path.join(profileDir, "the-meridian.json");
+    if (!exists(file)) return;
+    const profile = readJson(file);
+    expect(profile.environments).toHaveProperty("production");
+    expect(profile.environments.production.writePolicy).toBe("ask");
+    expect(profile.environments.production.approvalPolicy).toBe("double");
+  });
+
+  it("no full Superpowers plugin references", () => {
+    if (!exists(skillFile)) return;
+    const content = fs.readFileSync(skillFile, "utf-8");
+    expect(content).not.toContain("superpowers");
+    expect(content).not.toContain("writing-plans");
+  });
+});

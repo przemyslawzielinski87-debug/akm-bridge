@@ -1,22 +1,6 @@
 import { existsSync, statSync } from 'node:fs'
 import { normalize, resolve } from 'node:path'
-
-// ── Allowlists ──────────────────────────────────────────────────────────────
-
-const ALLOWED_PROJECTS = [
-  '/root/projekt/akm-bridge',
-  '/root/projekt/strategikon',
-]
-
-const ALLOWED_AGENTS = [
-  'akm-build',
-  'meridian-dev',
-  'infra-ops',
-  'reviewer',
-  'security-auditor',
-  'release-manager',
-  'researcher',
-]
+import { projectRegistry, checkAgentAllowed, checkCommandAllowed } from '../projects/index.js'
 
 const FORBIDDEN_OPERATIONS = [
   'force push',
@@ -38,8 +22,6 @@ const SECRET_PATTERNS = [
 const MAX_PROMPT_LENGTH = 50_000
 const MAX_SUMMARY_LENGTH = 500
 
-// ── Types ───────────────────────────────────────────────────────────────────
-
 export interface ValidationInput {
   project: string
   agent?: string
@@ -49,6 +31,7 @@ export interface ValidationInput {
   created_by?: string
   idempotency_key?: string
   path?: string
+  environment?: string
 }
 
 export interface ValidationResult {
@@ -56,13 +39,11 @@ export interface ValidationResult {
   errors: string[]
 }
 
-// ── Validator ───────────────────────────────────────────────────────────────
-
 export function validateTask(input: ValidationInput): ValidationResult {
   const errors: string[] = []
 
-  validateProject(input.project, errors)
-  validateAgent(input.agent, errors)
+  validateProject(input.project, input.environment, errors)
+  validateAgent(input.agent, input.project, errors)
   validateCommand(input.command, errors)
   validatePrompt(input.prompt_summary, input.full_prompt, errors)
   validatePath(input.path, input.project, errors)
@@ -72,27 +53,40 @@ export function validateTask(input: ValidationInput): ValidationResult {
   return { valid: errors.length === 0, errors }
 }
 
-function validateProject(project: string, errors: string[]): void {
+function validateProject(project: string, environment: string | undefined, errors: string[]): void {
   if (!project || project.trim().length === 0) {
     errors.push('Project is required')
     return
   }
 
-  const normalized = normalize(project)
-  const isAllowed = ALLOWED_PROJECTS.some(
-    (p) => normalized === p || normalized.startsWith(p + '/')
-  )
+  const resolved = projectRegistry.resolveProject(project)
+  if (!resolved) {
+    errors.push(`Project "${project}" is not in the project registry`)
+    return
+  }
 
-  if (!isAllowed) {
-    errors.push(`Project "${project}" is not on the allowlist`)
+  // Check environment validity
+  if (environment) {
+    const envConfig = resolved.profile.environments[environment as keyof typeof resolved.profile.environments]
+    if (!envConfig) {
+      const validEnvs = Object.keys(resolved.profile.environments).join(', ')
+      errors.push(`Environment "${environment}" not valid for project "${resolved.profile.id}". Valid: ${validEnvs}`)
+    }
   }
 }
 
-function validateAgent(agent: string | undefined, errors: string[]): void {
+function validateAgent(agent: string | undefined, project: string, errors: string[]): void {
   if (!agent || agent.trim().length === 0) return
 
-  if (!ALLOWED_AGENTS.includes(agent)) {
-    errors.push(`Agent "${agent}" is not valid. Allowed: ${ALLOWED_AGENTS.join(', ')}`)
+  const resolved = projectRegistry.resolveProject(project)
+  if (!resolved) {
+    errors.push(`Cannot validate agent — project "${project}" not found`)
+    return
+  }
+
+  const result = checkAgentAllowed(resolved.profile, agent)
+  if (!result.allowed) {
+    errors.push(result.reason!)
   }
 }
 
@@ -144,11 +138,16 @@ function validatePath(
 ): void {
   if (!path || path.trim().length === 0) return
 
-  const resolved = resolve(project, path)
-  const normalizedProject = normalize(project)
+  const resolved = projectRegistry.resolveProject(project)
+  if (!resolved) {
+    errors.push(`Cannot validate path — project "${project}" not found`)
+    return
+  }
 
-  if (!resolved.startsWith(normalizedProject)) {
-    errors.push(`Path "${path}" is outside the project directory`)
+  const resolvedPath = resolve(path)
+  const isAllowed = projectRegistry.isPathAllowed(resolvedPath, resolved.profile)
+  if (!isAllowed) {
+    errors.push(`Path "${path}" is outside the project "${resolved.profile.id}" directory`)
   }
 }
 
@@ -166,16 +165,16 @@ function validateForbidden(
   }
 }
 
+const VALID_USERS = new Set(['dashboard', 'api', 'system', 'cron'])
+
 function validateCreatedBy(createdBy: string | undefined, errors: string[]): void {
   if (!createdBy || createdBy.trim().length === 0) return
-
-  const validUsers = ['dashboard', 'api', 'system', 'cron']
-  if (!validUsers.includes(createdBy)) {
+  if (!VALID_USERS.has(createdBy)) {
     errors.push(`Created_by "${createdBy}" is not a recognized user`)
   }
 }
 
-// ── Idempotency Dedup ───────────────────────────────────────────────────────
+// ── Idempotency Dedup ──
 
 const seenIdempotencyKeys = new Map<string, number>()
 const IDEMPOTENCY_TTL = 3600_000
@@ -197,7 +196,6 @@ export function checkIdempotency(key: string | undefined): {
 export function registerIdempotencyKey(key: string, taskId: string): void {
   if (!key) return
 
-  // Cleanup expired keys
   const now = Date.now()
   for (const [k, ts] of seenIdempotencyKeys) {
     if (now - ts > IDEMPOTENCY_TTL) seenIdempotencyKeys.delete(k)

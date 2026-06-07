@@ -3,8 +3,9 @@ import type { TaskStore, Task } from './task-store.js'
 import type { OpenCodeExecutionAdapter } from './opencode-execution-adapter.js'
 import type { ApprovalManager } from './approval-manager.js'
 import type { SSEManager } from './sse-manager.js'
-
-// ── Types ───────────────────────────────────────────────────────────────────
+import { projectRegistry } from '../projects/project-registry.js'
+import { checkBudget, recordUsage } from '../projects/project-budgets.js'
+import { acquireLock, releaseLock, clearExpiredLocks } from '../projects/project-locks.js'
 
 export interface WorkerOptions {
   concurrency?: number
@@ -18,15 +19,11 @@ export interface WorkerStatus {
   activeTaskIds: string[]
 }
 
-// ── Incident Check ──────────────────────────────────────────────────────────
-
 let incidentActive = false
 
 export function setIncidentActive(active: boolean): void {
   incidentActive = active
 }
-
-// ── Worker ──────────────────────────────────────────────────────────────────
 
 export class TaskWorker {
   private store: TaskStore
@@ -38,6 +35,7 @@ export class TaskWorker {
   private defaultTimeoutMs: number
   private running = new Map<string, AbortController>()
   private projectLocks = new Map<string, string>()
+  private environmentLocks = new Map<string, string>()
   private pollTimer: ReturnType<typeof setInterval> | null = null
   private stopping = false
 
@@ -91,8 +89,6 @@ export class TaskWorker {
     }
   }
 
-  // ── Recovery ────────────────────────────────────────────────────────
-
   private recoverInterrupted(): void {
     const running = this.store.listTasks({ status: 'running', limit: 100 })
     for (const task of running) {
@@ -103,8 +99,6 @@ export class TaskWorker {
       this.store.addEvent(task.id, 'task_recovered', 'Task re-queued after worker restart')
     }
   }
-
-  // ── Polling ────────────────────────────────────────────────────────
 
   private async poll(): Promise<void> {
     if (this.stopping) return
@@ -117,17 +111,50 @@ export class TaskWorker {
     await this.executeTask(task)
   }
 
-  // ── Execution ──────────────────────────────────────────────────────
-
   private async executeTask(task: Task): Promise<void> {
-    const projectLock = task.project_lock ?? task.project
+    const profile = projectRegistry.getProfile(task.project_id ?? task.project)
+    const profileConcurrency = profile?.concurrency.maxWriteTasks ?? 1
+    const environment = task.environment ?? 'local'
+    const isWrite = task.command !== 'read'
 
-    // Per-project lock: only one write task per project
-    if (task.command !== 'read' && this.projectLocks.has(projectLock)) {
-      return
+    clearExpiredLocks()
+
+    if (isWrite) {
+      const envLockKey = `${task.project_lock ?? task.project}:${environment}`
+      if (this.projectLocks.has(task.project_lock ?? task.project)) {
+        return
+      }
+      if (this.environmentLocks.has(envLockKey)) {
+        return
+      }
+      if (this.running.size >= profileConcurrency) {
+        return
+      }
+
+      const lockResult = acquireLock(
+        profile ?? { id: 'unclassified' } as any,
+        environment as any,
+        task.id,
+        'write',
+        600_000
+      )
+      if (!lockResult.acquired) {
+        return
+      }
+
+      this.projectLocks.set(task.project_lock ?? task.project, task.id)
+      this.environmentLocks.set(envLockKey, task.id)
     }
 
-    this.projectLocks.set(projectLock, task.id)
+    const budgetCheck = profile ? checkBudget(profile, 1000, 4000, isWrite) : { allowed: true }
+    if (!budgetCheck.allowed) {
+      this.store.updateTask(task.id, {
+        status: 'failed',
+        finished_at: new Date().toISOString(),
+        error: budgetCheck.reason ?? 'Budget exceeded',
+      })
+      return
+    }
 
     const controller = new AbortController()
     this.running.set(task.id, controller)
@@ -141,12 +168,12 @@ export class TaskWorker {
       type: 'task_started',
       taskId: task.id,
       agent: task.agent,
+      environment,
     })
 
-    this.store.addEvent(task.id, 'task_started', `Execution started with agent ${task.agent ?? 'default'}`)
+    this.store.addEvent(task.id, 'task_started', `Execution started with agent ${task.agent ?? 'default'} in ${environment}`)
 
     try {
-      // Pre-check: approval required?
       const needsApproval = this.approvalManager.needsApproval(task)
       if (needsApproval) {
         const approval = this.approvalManager.createApprovalForTask(task)
@@ -172,7 +199,7 @@ export class TaskWorker {
         }
       }
 
-      const timeout = this.getEffectiveTimeout(task)
+      const timeout = this.getEffectiveTimeout(task, profile)
       const result = await this.adapter.execute({
         prompt: task.full_prompt ?? task.prompt_summary,
         sessionId: task.session_id ?? undefined,
@@ -212,6 +239,10 @@ export class TaskWorker {
           `${result.permissionRequests.length} permission request(s) during execution`
         )
       }
+
+      if (profile) {
+        recordUsage(profile, isWrite ? 'write' : 'read', result.tokenUsage.input + result.tokenUsage.output)
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       this.store.updateTask(task.id, {
@@ -223,11 +254,18 @@ export class TaskWorker {
       this.sse.send(task.id, { type: 'task_failed', taskId: task.id, error: msg })
     } finally {
       this.running.delete(task.id)
-      this.projectLocks.delete(projectLock)
+      this.projectLocks.delete(task.project_lock ?? task.project)
+      if (environment) {
+        this.environmentLocks.delete(`${task.project_lock ?? task.project}:${environment}`)
+      }
+      releaseLock(task.project_lock ?? task.project)
     }
   }
 
-  private getEffectiveTimeout(task: Task): number {
+  private getEffectiveTimeout(task: Task, profile?: any): number {
+    if (profile?.budgets?.maxDurationPerTaskMs) {
+      return profile.budgets.maxDurationPerTaskMs
+    }
     if (task.priority === 'urgent') return this.defaultTimeoutMs * 2
     if (task.priority === 'low') return this.defaultTimeoutMs / 2
     return this.defaultTimeoutMs

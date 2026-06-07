@@ -1,0 +1,94 @@
+{
+  "id": "unclassified",
+  "name": "Unclassified Project",
+  "description": "Default fallback profile — read-only. No write, deploy, admin, or shell operations.",
+  "repositoryPath": "",
+  "repositoryRemote": "",
+  "defaultBranch": "main",
+  "allowedBranches": ["main"],
+  "projectType": "unknown",
+  "enabled": true,
+  "environments": {
+    "local": {
+      "writePolicy": "deny",
+      "approvalPolicy": "none",
+      "healthCheckRequired": false,
+      "backupRequired": false,
+      "rollbackRequired": false
+    }
+  },
+  "agents": ["researcher", "reviewer"],
+  "commands": ["/brainstorm", "/review", "/projects"],
+  "skills": ["brainstorming", "meridian-quick-fix"],
+  "mcpServers": [],
+  "mcpTools": [],
+  "akm": {
+    "namespaces": [],
+    "sources": [],
+    "tags": [],
+    "collections": [],
+    "searchFirstInProject": true,
+    "allowGlobalFallback": false
+  },
+  "permissions": {
+    "read": "allow",
+    "write": "deny",
+    "deploy": "deny",
+    "admin": "deny",
+    "shell": "deny",
+    "gitPush": "deny",
+    "gitForcePush": "deny"
+  },
+  "budgets": {
+    "dailyTokensRead": 100000,
+    "dailyTokensWrite": 0,
+    "weeklyTokensRead": 500000,
+    "weeklyTokensWrite": 0,
+    "maxTokensPerTask": 50000,
+    "maxToolCallsPerTask": 20,
+    "maxDurationPerTaskMs": 120000,
+    "maxConcurrentTasks": 1,
+    "maxScheduledRunsPerDay": 0,
+    "softWarningPct": 80
+  },
+  "concurrency": {
+    "maxReadTasks": 1,
+    "maxWriteTasks": 0,
+    "queuePolicy": "fifo"
+  },
+  "gitPolicy": {
+    "allowedBranches": ["main"],
+    "requirePullRequest": true,
+    "requireApproval": true,
+    "forbidForcePush": true,
+    "requireUpToDate": true,
+    "commitSigningRequired": false
+  },
+  "deploymentPolicy": {
+    "requireBackup": true,
+    "requireHealthCheck": true,
+    "requireApproval": true,
+    "approvalCount": 2,
+    "canaryEnabled": false,
+    "rollbackEnabled": true,
+    "maxRetries": 0
+  },
+  "schedules": [],
+  "observability": {
+    "metricsRetentionDays": 7,
+    "alertOnFailure": true,
+    "alertOnBudgetExceeded": true,
+    "dailyDigest": false,
+    "weeklyDigest": false,
+    "logLevel": "info"
+  },
+  "backupPolicy": {
+    "repositoryBackup": false,
+    "databaseBackup": false,
+    "uploadsBackup": false,
+    "secretsBackup": false,
+    "rtoMinutes": 1440,
+    "rpoMinutes": 1440,
+    "backupRetentionDays": 7
+  }
+}

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 // ── Schema ──────────────────────────────────────────────────────────────────
 
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 
 const MIGRATIONS: Record<number, string> = {
   1: `
@@ -15,6 +15,8 @@ const MIGRATIONS: Record<number, string> = {
       created_at TEXT NOT NULL,
       created_by TEXT NOT NULL DEFAULT 'dashboard',
       project TEXT NOT NULL,
+      environment TEXT NOT NULL DEFAULT 'local',
+      project_id TEXT,
       agent TEXT,
       command TEXT,
       prompt_summary TEXT NOT NULL,
@@ -90,6 +92,19 @@ const MIGRATIONS: Record<number, string> = {
     CREATE INDEX IF NOT EXISTS idx_artifacts_task_id ON artifacts(task_id);
     CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);
   `,
+
+  2: `
+    ALTER TABLE tasks ADD COLUMN environment TEXT NOT NULL DEFAULT 'local';
+    ALTER TABLE tasks ADD COLUMN project_id TEXT;
+
+    CREATE TABLE IF NOT EXISTS project_profiles (
+      profile_id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      synced_at TEXT NOT NULL,
+      checksum TEXT
+    );
+  `,
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -99,6 +114,8 @@ export interface Task {
   created_at: string
   created_by: string
   project: string
+  environment: string
+  project_id: string | null
   agent: string | null
   command: string | null
   prompt_summary: string
@@ -229,19 +246,23 @@ export class TaskStore {
     created_by?: string
     idempotency_key?: string
     project_lock?: string
+    environment?: string
+    project_id?: string
   }): Task {
     const now = new Date().toISOString()
     this.db
       .query(
-        `INSERT INTO tasks (id, created_at, created_by, project, agent, command,
+        `INSERT INTO tasks (id, created_at, created_by, project, environment, project_id, agent, command,
          prompt_summary, full_prompt, status, priority, idempotency_key, project_lock)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)`
       )
       .run(
         t.id,
         now,
         t.created_by ?? 'dashboard',
         t.project,
+        t.environment ?? 'local',
+        t.project_id ?? null,
         t.agent ?? null,
         t.command ?? null,
         t.prompt_summary,
@@ -288,6 +309,8 @@ export class TaskStore {
   listTasks(opts: {
     status?: string
     project?: string
+    environment?: string
+    project_id?: string
     limit?: number
     offset?: number
   } = {}): Task[] {
@@ -301,6 +324,14 @@ export class TaskStore {
     if (opts.project) {
       where.push('project = ?')
       params.push(opts.project)
+    }
+    if (opts.environment) {
+      where.push('environment = ?')
+      params.push(opts.environment)
+    }
+    if (opts.project_id) {
+      where.push('project_id = ?')
+      params.push(opts.project_id)
     }
 
     const clause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''

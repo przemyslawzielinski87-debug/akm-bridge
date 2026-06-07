@@ -409,7 +409,11 @@ input,select,textarea{font-family:var(--font);font-size:14px}
           </div>
           <div class="form-group">
             <label>Project</label>
-            <select id="task-project"><option value="">Loading projects...</option></select>
+            <select id="task-project" onchange="onTaskProjectChange()"><option value="">Loading projects...</option></select>
+          </div>
+          <div class="form-group" id="task-env-group" style="display:none">
+            <label>Environment</label>
+            <select id="task-environment"><option value="local">local</option></select>
           </div>
           <div class="form-group">
             <label>Mode</label>
@@ -529,7 +533,11 @@ input,select,textarea{font-family:var(--font);font-size:14px}
         </div>
         <div class="form-group">
           <label>Project *</label>
-          <select id="sch-project"><option value="">Loading...</option></select>
+          <select id="sch-project" onchange="onSchProjectChange()"><option value="">Loading...</option></select>
+        </div>
+        <div class="form-group" id="sch-env-group" style="display:none">
+          <label>Environment</label>
+          <select id="sch-environment"><option value="local">local</option></select>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -839,6 +847,7 @@ input,select,textarea{font-family:var(--font);font-size:14px}
           </div>
           <div class="task-meta">
             <span>📁 ${escapeHtml(t.project.split('/').pop())}</span>
+            ${t.environment ? `<span>🌍 ${escapeHtml(t.environment)}</span>` : ''}
             ${t.agent ? `<span>🤖 ${escapeHtml(t.agent)}</span>` : ''}
             <span>🕐 ${date} ${time}</span>
             ${tokenInfo ? `<span>📊 ${tokenInfo}</span>` : ''}
@@ -848,6 +857,8 @@ input,select,textarea{font-family:var(--font);font-size:14px}
             <div style="margin-bottom:8px">
               <strong>ID:</strong> <code style="font-size:11px;color:var(--text-muted)">${t.id}</code>
             </div>
+            ${t.environment ? `<div style="font-size:12px;margin-bottom:4px"><strong>Environment:</strong> ${escapeHtml(t.environment)}</div>` : ''}
+            ${t.project_id ? `<div style="font-size:12px;margin-bottom:4px"><strong>Project ID:</strong> ${escapeHtml(t.project_id)}</div>` : ''}
             ${t.error ? `<div style="color:var(--red);font-size:12px;margin-bottom:8px">${escapeHtml(t.error)}</div>` : ''}
             ${t.result_summary ? `<div style="font-size:12px;margin-bottom:8px;color:var(--text-secondary)">${escapeHtml(t.result_summary)}</div>` : ''}
             <div class="card-footer">
@@ -908,14 +919,123 @@ input,select,textarea{font-family:var(--font);font-size:14px}
   async function loadProjects() {
     try {
       const res = await apiFetch('/api/projects');
+      window._projectData = res.data || [];
       const sel = document.getElementById('task-project');
       sel.innerHTML = (res.data || []).map(p =>
         `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`
       ).join('');
+      const sel2 = document.getElementById('sch-project');
+      sel2.innerHTML = sel.innerHTML;
     } catch {
       document.getElementById('task-project').innerHTML = '<option value="">Failed to load</option>';
+      document.getElementById('sch-project').innerHTML = '<option value="">Failed to load</option>';
     }
   }
+
+  window.onTaskProjectChange = function() {
+    const id = document.getElementById('task-project').value;
+    const envGroup = document.getElementById('task-env-group');
+    const envSel = document.getElementById('task-environment');
+    const agentSel = document.getElementById('task-agent');
+    const cmdSel = document.getElementById('task-command');
+    envSel.innerHTML = '';
+    agentSel.innerHTML = '<option value="">Default</option>';
+    cmdSel.innerHTML = '';
+
+    if (!id || !window._projectData) {
+      envGroup.style.display = 'none';
+      return;
+    }
+
+    const proj = window._projectData.find(p => p.id === id);
+    if (!proj) { envGroup.style.display = 'none'; return; }
+
+    // Populate environments
+    if (proj.environments && proj.environments.length > 0) {
+      proj.environments.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e;
+        opt.textContent = e;
+        envSel.appendChild(opt);
+      });
+      envGroup.style.display = 'block';
+    } else {
+      envGroup.style.display = 'none';
+    }
+
+    // Populate agents from profile
+    if (proj.agents && proj.agents.length > 0) {
+      agentSel.innerHTML = '<option value="">Default</option>';
+      proj.agents.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        agentSel.appendChild(opt);
+      });
+    }
+
+    // Populate commands from profile
+    if (proj.commands && proj.commands.length > 0) {
+      cmdSel.innerHTML = '';
+      proj.commands.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        cmdSel.appendChild(opt);
+      });
+    }
+  };
+
+  window.onSchProjectChange = function() {
+    const id = document.getElementById('sch-project').value;
+    const envGroup = document.getElementById('sch-env-group');
+    const envSel = document.getElementById('sch-environment');
+    const agentSel = document.getElementById('sch-agent');
+    const cmdSel = document.getElementById('sch-command');
+    envSel.innerHTML = '';
+    agentSel.innerHTML = '<option value="">Default</option>';
+    cmdSel.innerHTML = '<option value="">None</option>';
+
+    if (!id || !window._projectData) {
+      envGroup.style.display = 'none';
+      return;
+    }
+
+    const proj = window._projectData.find(p => p.id === id);
+    if (!proj) { envGroup.style.display = 'none'; return; }
+
+    if (proj.environments && proj.environments.length > 0) {
+      proj.environments.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e;
+        opt.textContent = e;
+        envSel.appendChild(opt);
+      });
+      envGroup.style.display = 'block';
+    } else {
+      envGroup.style.display = 'none';
+    }
+
+    if (proj.agents && proj.agents.length > 0) {
+      agentSel.innerHTML = '<option value="">Default</option>';
+      proj.agents.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        agentSel.appendChild(opt);
+      });
+    }
+
+    if (proj.commands && proj.commands.length > 0) {
+      cmdSel.innerHTML = '<option value="">None</option>';
+      proj.commands.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        cmdSel.appendChild(opt);
+      });
+    }
+  };
 
   window.submitTask = async function() {
     const errEl = document.getElementById('task-submit-error');
@@ -926,8 +1046,11 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     if (!prompt) { errEl.textContent = 'Prompt is required'; errEl.style.display = 'block'; return; }
 
     const isCommandMode = document.getElementById('mode-command').classList.contains('active');
+    const envGroup = document.getElementById('task-env-group');
+    const environment = envGroup.style.display !== 'none' ? document.getElementById('task-environment').value : undefined;
     const body = {
       project,
+      environment,
       prompt_summary: prompt.slice(0, 500),
       full_prompt: prompt,
       agent: document.getElementById('task-agent').value || undefined,
@@ -1187,6 +1310,7 @@ input,select,textarea{font-family:var(--font);font-size:14px}
           </div>
           <div class="task-meta">
             <span>📁 ${escapeHtml(s.project.split('/').pop())}</span>
+            ${s.environment ? `<span>🌍 ${escapeHtml(s.environment)}</span>` : ''}
             ${s.agent ? `<span>🤖 ${escapeHtml(s.agent)}</span>` : ''}
             <span>⏱ ${typeLabel}</span>
             <span>⏭ ${nextRun}</span>
@@ -1320,8 +1444,11 @@ input,select,textarea{font-family:var(--font);font-size:14px}
     if (!prompt) { errEl.textContent = 'Prompt is required'; errEl.style.display = 'block'; return; }
     if (!expr) { errEl.textContent = 'Schedule expression is required'; errEl.style.display = 'block'; return; }
 
+    const envGroup = document.getElementById('sch-env-group');
+    const environment = envGroup.style.display !== 'none' ? document.getElementById('sch-environment').value : undefined;
     const body = {
-      name, project, prompt_template: prompt,
+      name, project, environment,
+      prompt_template: prompt,
       schedule_type: type, schedule_expression: expr,
       agent: document.getElementById('sch-agent').value || undefined,
       command: document.getElementById('sch-command').value || undefined,

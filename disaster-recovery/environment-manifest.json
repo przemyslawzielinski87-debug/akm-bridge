@@ -40,17 +40,19 @@
     "files": []
   },
   "commands": {
-    "count": 20,
+    "count": 21,
     "directory": "/root/.config/opencode/commands",
     "files": [
-      "brainstorm.md"
+      "brainstorm.md",
+      "projects.md"
     ]
   },
   "skills": {
-    "count": 22,
+    "count": 23,
     "directory": "/root/.config/opencode/skills",
     "directories": [
-      "brainstorming"
+      "brainstorming",
+      "multi-project-governance"
     ]
   },
   "mcpServers": {
@@ -118,6 +120,12 @@
     "docs": "docs/OPENCODE-BRAINSTORMING-SKILL.md",
     "template": "docs/examples/skills/brainstorming/SKILL.md"
   },
+  "activeMultiProjectPaths": {
+    "skill": "~/.config/opencode/skills/multi-project-governance/SKILL.md",
+    "command": "~/.config/opencode/commands/projects.md",
+    "docs": "docs/OPENCODE-MULTI-PROJECT-GOVERNANCE.md",
+    "profileRegistry": "config/projects/"
+  },
   "secretPlaceholders": [
     {
       "name": "AKM_WRITE_ENABLED",
@@ -145,6 +153,15 @@
     "brainstorming_read_only",
     "brainstorming_approval_gate",
     "brainstorming_handoff_contract",
-    "brainstorming_selective_loading"
+    "brainstorming_selective_loading",
+    "multi_project_governance_skill_exists",
+    "projects_command_exists",
+    "multi_project_profile_registry",
+    "multi_project_unclassified_fallback",
+    "multi_project_agent_scoping",
+    "multi_project_command_scoping",
+    "multi_project_filesystem_isolation",
+    "multi_project_budget_enforcement",
+    "multi_project_lock_system"
   ]
 }
