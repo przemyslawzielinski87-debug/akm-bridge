@@ -15,7 +15,10 @@
     "lint": "tsc --noEmit",
     "lint:ci": "tsc --noEmit --project tsconfig.ci.json",
     "validate:docs": "tsx scripts/validate-docs.ts",
-    "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit"
+    "test:mcp-contract": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=mcp-contract --forceExit",
+    "test:observability": "node --experimental-vm-modules node_modules/.bin/jest --testPathPatterns=observability --forceExit",
+    "check:mcp-health": "tsx scripts/check-mcp-health.ts",
+    "observability:report": "tsx scripts/opencode-observability-report.ts"
   },
   "dependencies": {
     "tsx": "^4.22.4"

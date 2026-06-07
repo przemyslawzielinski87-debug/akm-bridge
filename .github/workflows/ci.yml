@@ -40,5 +40,9 @@ jobs:
       - name: MCP contract tests
         run: bun run test:mcp-contract
 
-      - name: Test
-        run: bun run test:mcp-contract
+
+      - name: Observability tests
+        run: bun run test:observability
+
+      - name: MCP health check (CI mode)
+        run: AKM_BINARY=./fixtures/fake-akm.sh bun run check:mcp-health
