@@ -1,0 +1,8 @@
+model|direct_api_status|note
+MiniMax-M3|PASS|HTTP 200 with completion content
+MiniMax-M2.7|PASS|HTTP 200 with completion content
+MiniMax-M2.7-highspeed|PASS|HTTP 200 with completion content
+MiniMax-M2.5|PASS|HTTP 200 with completion content
+MiniMax-M2.5-highspeed|PASS|HTTP 200 with completion content
+MiniMax-M2.1|PASS|HTTP 200 with completion content
+MiniMax-M2|PASS|HTTP 200 with completion content

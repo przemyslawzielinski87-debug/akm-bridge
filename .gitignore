@@ -14,3 +14,7 @@ data/
 
 # Dashboard runtime
 dashboard-cache.json
+
+# MiniMax / local secret setup (never commit API keys)
+cursor-minimax-setup-evidence-*/.minimax*
+**/MINIMAX_API_KEY*
