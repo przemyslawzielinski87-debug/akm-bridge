@@ -10,9 +10,9 @@
 
 | Pole | Wartość |
 |------|---------|
-| `CURSOR_MINIMAX_SETUP_STATUS` | **PARTIAL** |
+| `CURSOR_MINIMAX_SETUP_STATUS` | **PARTIAL → WORKSPACE_READY** |
 | `DIRECT_API` | **PASS** |
-| `CURSOR_CONFIG` | **PARTIAL** (wymaga ręcznej konfiguracji UI na telefonie/kliencie Cursor) |
+| `CURSOR_CONFIG` | **WORKSPACE_AUTO** (`.env` + settings na VM + skrypt desktop) |
 | `PRIMARY_MODEL` | `MiniMax-M3` |
 | `FALLBACK_MODEL` | `MiniMax-M2.7-highspeed` |
 | `BASE_URL` | `https://api.minimax.io/v1` |
