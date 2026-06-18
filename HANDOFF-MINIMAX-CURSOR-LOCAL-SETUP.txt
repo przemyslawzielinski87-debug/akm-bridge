@@ -1,0 +1,170 @@
+================================================================================
+HANDOFF: MINIMAX API + CURSOR LOCAL SETUP
+Generated: 2026-06-18
+Environment: Cloud Agent (CASE 2 — no local Cursor DB access)
+================================================================================
+
+MINIMAX_API_STATUS:   CLOUD_SCRIPTS_READY / LOCAL_KEY_REQUIRED
+CURSOR_PICKER_STATUS: ACTION_REQUIRED_ON_LOCAL_CURSOR_DEVICE
+API_TEST_STATUS:      SKIPPED (no MINIMAX_API_KEY available in cloud env)
+
+--------------------------------------------------------------------------------
+WHAT IS CONFIGURED IN CLOUD
+--------------------------------------------------------------------------------
+
+Files created in this repository:
+
+  minimax-dual-setup/
+    00-DWA-URZADZENIA.md          — overview (Polish)
+    local-cursor/
+      README.md                   — full setup guide (English)
+      install.sh                  — interactive installer script
+
+  scripts/
+    patch-cursor-minimax-vscdb.py — Python script to patch Cursor DB directly
+
+  HANDOFF-MINIMAX-CURSOR-LOCAL-SETUP.txt  — this file
+
+MiniMax API parameters (no secrets):
+  Base URL:  https://api.minimax.io/v1
+  Endpoint:  https://api.minimax.io/v1/chat/completions
+  Auth:      Bearer <MINIMAX_API_KEY>
+
+Models configured:
+  MiniMax-M3              (primary)
+  MiniMax-M2.7-highspeed
+  MiniMax-M2.7
+  MiniMax-M2.5-highspeed
+  MiniMax-M2.5
+  MiniMax-M2.1
+  MiniMax-M2
+
+--------------------------------------------------------------------------------
+WHAT MUST BE CONFIGURED LOCALLY (ACTION_REQUIRED)
+--------------------------------------------------------------------------------
+
+The Cursor model picker lives in your LOCAL Cursor app, not in the cloud.
+Cloud configuration here does NOT make models appear in your Cursor UI.
+
+You must perform setup on your local PC/Mac/Linux.
+
+--------------------------------------------------------------------------------
+FASTEST PATH — MANUAL UI IN CURSOR (RECOMMENDED)
+--------------------------------------------------------------------------------
+
+1. Open Cursor on your local machine
+2. Go to:
+     Cursor → Settings → Models
+   (or press Cmd/Ctrl+Shift+P → "Cursor Settings: Open Models")
+3. Enable: [OpenAI API Key] toggle
+4. Paste your MiniMax API key in the OpenAI API Key field
+5. Enable: [Override OpenAI Base URL] toggle
+6. Enter base URL:
+     https://api.minimax.io/v1
+7. In "Custom Models" section, add:
+     MiniMax-M3
+8. Enable the toggle for MiniMax-M3
+9. Optionally add and enable fallback models:
+     MiniMax-M2.7-highspeed
+     MiniMax-M2.7
+     MiniMax-M2.5-highspeed
+     MiniMax-M2.5
+     MiniMax-M2.1
+     MiniMax-M2
+10. Select MiniMax-M3 in the model picker dropdown
+11. Send a test message to confirm it works
+
+--------------------------------------------------------------------------------
+LOCAL SCRIPT PATH (ALTERNATIVE)
+--------------------------------------------------------------------------------
+
+Run on your local machine with Cursor FULLY CLOSED:
+
+  # Option A: from cloned repo
+  git clone <REPO_URL>
+  cd <REPO>/minimax-dual-setup/local-cursor
+  bash install.sh
+
+  # Option B: one-liner (after repo is public/accessible)
+  bash <(curl -fsSL https://raw.githubusercontent.com/YOUR_REPO/main/minimax-dual-setup/local-cursor/install.sh)
+
+The script will:
+  - Prompt for API key (hidden input)
+  - Create ~/.cursor-minimax/local.env (chmod 600)
+  - Test the API
+  - Optionally patch state.vscdb
+
+--------------------------------------------------------------------------------
+DB PATCH SCRIPT (ADVANCED / OPTIONAL)
+--------------------------------------------------------------------------------
+
+File: scripts/patch-cursor-minimax-vscdb.py
+
+Usage (Cursor must be FULLY CLOSED):
+
+  # Linux
+  python3 scripts/patch-cursor-minimax-vscdb.py \
+    --db ~/.config/Cursor/User/globalStorage/state.vscdb \
+    --env-file ~/.cursor-minimax/local.env
+
+  # macOS
+  python3 scripts/patch-cursor-minimax-vscdb.py \
+    --db "~/Library/Application Support/Cursor/User/globalStorage/state.vscdb" \
+    --env-file ~/.cursor-minimax/local.env
+
+  # Dry run first (no changes)
+  python3 scripts/patch-cursor-minimax-vscdb.py --db <path> --dry-run
+
+--------------------------------------------------------------------------------
+DIRECT API TEST (outside Cursor)
+--------------------------------------------------------------------------------
+
+Run on any machine with internet access and your API key:
+
+  export MINIMAX_API_KEY="your-key-here"
+
+  curl -s \
+    -H "Authorization: Bearer $MINIMAX_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"model":"MiniMax-M3","messages":[{"role":"system","content":"Reply with exactly OK."},{"role":"user","content":"ping"}],"max_tokens":16}' \
+    https://api.minimax.io/v1/chat/completions \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print('SUCCESS:', d['choices'][0]['message']['content'] if 'choices' in d else d.get('error','FAIL'))"
+
+Expected output if working: SUCCESS: OK
+
+--------------------------------------------------------------------------------
+KNOWN BLOCKERS
+--------------------------------------------------------------------------------
+
+1. Cursor Pro / paid plan may be required for custom OpenAI-compatible models.
+   Free tier may not support custom base URL override.
+
+2. OPENAI_API_KEY and OPENAI_BASE_URL system environment variables can
+   override Cursor settings — unset them if they conflict.
+
+3. State.vscdb must only be patched when Cursor is fully closed.
+   Patching while Cursor is running causes corruption.
+
+4. Some Cursor versions may require "Developer: Reload Window" after adding models.
+
+--------------------------------------------------------------------------------
+NEXT EXACT ACTION
+--------------------------------------------------------------------------------
+
+  => Go to Cursor Settings → Models
+  => Set OpenAI API Key = your MiniMax key
+  => Set Override Base URL = https://api.minimax.io/v1
+  => Add model: MiniMax-M3
+  => Test with a prompt
+
+--------------------------------------------------------------------------------
+SECURITY REMINDER
+--------------------------------------------------------------------------------
+
+- Never commit your MiniMax API key to any repository.
+- Rotate your key at https://platform.minimax.io/ after any plaintext exposure.
+- Key storage: ~/.cursor-minimax/local.env (chmod 600) only.
+
+================================================================================
+END OF HANDOFF
+================================================================================
