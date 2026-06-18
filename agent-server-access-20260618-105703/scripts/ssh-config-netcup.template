@@ -1,0 +1,19 @@
+# Copy to ~/.ssh/config and replace placeholders.
+# chmod 600 ~/.ssh/config
+
+Host netcup
+    HostName REPLACE_WITH_VPS_IP_OR_HOSTNAME
+    User wpagent
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519_wpagent_cursor
+    IdentitiesOnly yes
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# For MiniMax — use its own IdentityFile path after generating its key:
+# Host netcup
+#     HostName REPLACE_WITH_VPS_IP_OR_HOSTNAME
+#     User wpagent
+#     Port 22
+#     IdentityFile ~/.ssh/id_ed25519_wpagent_minimax
+#     IdentitiesOnly yes
