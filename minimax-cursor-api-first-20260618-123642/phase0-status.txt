@@ -1,0 +1,21 @@
+PHASE 0 STATUS
+==============
+pwd:      /workspace
+whoami:   ubuntu
+hostname: cursor
+uname:    Linux cursor 6.1.147 x86_64
+
+LOCAL_CURSOR_DB: NOT_FOUND
+CASE:            2 (Cloud Agent Only)
+
+MINIMAX_API_KEY: NOT PRESENT in environment
+LOCAL_ENV_FILE:  NOT FOUND (~/.cursor-minimax/local.env)
+
+API TEST: SKIPPED (no key available)
+
+FILES CREATED:
+  HANDOFF-MINIMAX-CURSOR-LOCAL-SETUP.txt
+  minimax-dual-setup/00-DWA-URZADZENIA.md
+  minimax-dual-setup/local-cursor/README.md
+  minimax-dual-setup/local-cursor/install.sh
+  scripts/patch-cursor-minimax-vscdb.py
