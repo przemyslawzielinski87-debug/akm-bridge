@@ -1,8 +1,8 @@
 {
-  "install": "bash /workspace/scripts/apply-minimax-env.sh || true",
+  "install": "bash /workspace/minimax-dual-setup/cloud-agent/install.sh --quiet || true",
   "env": {
-    "OPENAI_BASE_URL": "https://api.minimax.io/v1",
     "MINIMAX_BASE_URL": "https://api.minimax.io/v1",
+    "OPENAI_BASE_URL": "https://api.minimax.io/v1",
     "MINIMAX_MODEL": "MiniMax-M3"
   }
 }

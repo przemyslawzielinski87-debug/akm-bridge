@@ -18,3 +18,5 @@ dashboard-cache.json
 # MiniMax / local secret setup (never commit API keys)
 cursor-minimax-setup-evidence-*/.minimax*
 **/MINIMAX_API_KEY*
+minimax-dual-setup/cloud-agent/.installed
+minimax-dual-setup/cloud-agent/last-api-test/

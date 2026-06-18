@@ -66,8 +66,15 @@ def load_api_key() -> str:
     key = os.environ.get("MINIMAX_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if key:
         return key.strip()
-    env_file = Path(os.environ.get("MINIMAX_ENV_FILE", "/workspace/.env"))
-    if env_file.is_file():
+    candidates = [
+        Path(os.environ.get("MINIMAX_ENV_FILE", "")),
+        Path(os.environ.get("CURSOR_MINIMAX_ENV", "")),
+        Path.home() / ".cursor-minimax/local.env",
+        Path("/workspace/.env"),
+    ]
+    for env_file in candidates:
+        if not str(env_file) or not env_file.is_file():
+            continue
         for line in env_file.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -76,7 +83,7 @@ def load_api_key() -> str:
             if k.strip() in ("MINIMAX_API_KEY", "OPENAI_API_KEY") and v.strip():
                 return v.strip().strip('"').strip("'")
     raise SystemExit(
-        "Brak MINIMAX_API_KEY. Ustaw zmienną lub plik /workspace/.env"
+        "Brak MINIMAX_API_KEY. Ustaw MINIMAX_ENV_FILE lub ~/.cursor-minimax/local.env"
     )
 
 
