@@ -1,0 +1,45 @@
+# DRAFT ONLY — NIE INSTALOWAĆ bez jawnej zgody użytkownika
+# Plik docelowy na VPS (gdy zatwierdzony): /etc/sudoers.d/wpagent
+# Weryfikacja przed instalacją: visudo -c -f /etc/sudoers.d/wpagent
+
+# =============================================================================
+# PROFIL A — read-only diagnostics (ZALECANY na start)
+# =============================================================================
+# Pozwala wpagent na odczyt statusu usług i logów bez modyfikacji systemu.
+#
+# wpagent ALL=(ALL) NOPASSWD: /bin/systemctl status *, /usr/bin/journalctl *
+# wpagent ALL=(ALL) NOPASSWD: /usr/bin/docker ps, /usr/bin/docker inspect *
+# wpagent ALL=(ALL) NOPASSWD: /usr/bin/docker compose -f * config
+#
+# Uwaga: wildcardy w sudoers wymagają ostrożnej weryfikacji składni na danej dystrybucji.
+
+# =============================================================================
+# PROFIL B — deployment operator (TYLKO po osobnej zgodzie)
+# =============================================================================
+# Dla nadzorowanego wdrażania — wysokie ryzyko.
+#
+# wpagent ALL=(ALL) NOPASSWD: /usr/bin/docker compose -f /opt/strategikon/* *
+# wpagent ALL=(ALL) NOPASSWD: /usr/sbin/nginx -t
+# wpagent ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
+#
+# NIE nadawać: docker bez ograniczeń, systemctl restart *, rm, chmod, chown
+
+# =============================================================================
+# PROFIL C — emergency rollback (TYLKO incydent + zgoda)
+# =============================================================================
+# Tymczasowy dostęp do cofnięcia wdrożenia — logować każde użycie.
+#
+# wpagent ALL=(ALL) NOPASSWD: /usr/bin/git -C /var/www/strategikon checkout *
+#
+# Preferuj: agent nadzorujący wykonuje rollback przez dedykowany skrypt z audit log.
+
+# =============================================================================
+# ZABRONIONE domyślnie
+# =============================================================================
+# - wpagent ALL=(ALL) NOPASSWD: ALL
+# - dodanie wpagent do grupy docker (root-equivalent)
+# - PasswordAuthentication yes w sshd
+
+# INSTALACJA (tylko po zatwierdzeniu przez użytkownika):
+#   sudo install -o root -g root -m 0440 optional-wpagent-sudoers-draft.txt /etc/sudoers.d/wpagent
+#   sudo visudo -c
