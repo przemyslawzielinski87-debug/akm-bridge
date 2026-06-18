@@ -1,0 +1,292 @@
+================================================================================
+HANDOFF TEKSTOWY — The Meridian / Strategikon / Cursor + MiniMax + VPS
+================================================================================
+Data UTC:     2026-06-18
+Repo:         akm-bridge (/workspace)
+Branch PR:    cursor/minimax-api-cursor-setup-dc95
+Autor sesji:  Cursor Cloud Agent
+Język:        PL
+================================================================================
+
+SPIS TREŚCI
+-----------
+1. Cel projektu
+2. Co zostało zrobione (podsumowanie)
+3. Urządzenie A — Cloud Agent (serwer) — GOTOWE
+4. Urządzenie B — Lokalny Cursor (telefon/PC) — DO ZROBIENIA U CIEBIE
+5. MiniMax — modele i API
+6. SSH / VPS WordPress — status i odblokowanie
+7. Pliki i ścieżki w repo
+8. Komendy do wklejenia (copy-paste)
+9. Bezpieczeństwo i rotacja kluczy
+10. Otwarte pytania
+11. Następne kroki dla agenta nadzorującego
+
+================================================================================
+1. CEL PROJEKTU
+================================================================================
+
+WordPress portal geopolityczny/medialny: The Meridian (TheMeridian.com.pl).
+Nazwy techniczne: Strategikon, meridian, opencode.
+
+Cele sesji:
+- Odblokować MiniMax w workflow Cursor (API + modele)
+- Przygotować dostęp SSH agentów do VPS netcup (WordPress)
+- Umożliwić context-builder WordPress/VPS w trybie read-only
+
+To NIE jest deployment ani naprawa produkcji.
+
+================================================================================
+2. CO ZOSTAŁO ZROBIONE (PODSUMOWANIE)
+================================================================================
+
+[OK]  MiniMax API — bezpośredni test 7 modeli: PASS
+[OK]  Setup urządzenia A (Cloud Agent) — .env, bashrc, bootstrap
+[OK]  Rozdzielenie setupu A vs B (dwa urządzenia, dwa instalatory)
+[OK]  Skrypt patch state.vscdb dla lokalnego Cursor (urządzenie B)
+[OK]  Dokumentacja pickera modeli + troubleshooting
+[CZĘŚCIOWO] SSH VPS — klucz Cursor wygenerowany, bootstrap przygotowany, brak IP
+[BLOKER B]  Picker MiniMax na telefonie/PC — wymaga uruchomienia install.sh lokalnie
+
+================================================================================
+3. URZĄDZENIE A — CLOUD AGENT (SERWER)
+================================================================================
+
+Co to jest:
+  Serwer Cursor Cloud Agent (/workspace, hostname: cursor).
+  Agent w chmurze, skrypty, testy API — NIE picker modeli na telefonie.
+
+Status: GOTOWE (2026-06-18)
+
+Konfiguracja:
+  Env:           /workspace/.env  (chmod 600, gitignored, NIE w repo)
+  Base URL:      https://api.minimax.io/v1
+  Model domyślny: MiniMax-M3
+  Fallback:      MiniMax-M2.7-highspeed / MiniMax-M2.7
+
+Instalator:
+  bash minimax-dual-setup/cloud-agent/install.sh
+
+Status:
+  bash minimax-dual-setup/cloud-agent/status.sh
+
+Ostatni test API (7 modeli): PASS
+  Log: minimax-dual-setup/cloud-agent/last-api-test/
+
+WAŻNE:
+  Konfiguracja A NIE pojawia się w pickerze modeli na telefonie ani na PC.
+  To osobne urządzenie, osobny setup.
+
+================================================================================
+4. URZĄDZENIE B — LOKALNY CURSOR (TELEFON / KOMPUTER)
+================================================================================
+
+Co to jest:
+  Twoja aplikacja Cursor z pickerem modeli.
+  Baza: state.vscdb (SQLite) na Twoim urządzeniu.
+
+Status: DO ZROBIENIA NA TWOIM PC (nie da się zdalnie z serwera agenta)
+
+Wymagania:
+  - Cursor Pro (custom modele MiniMax — wymóg MiniMax/Cursor)
+  - Cursor 2.4+ zalecany
+  - Base URL: https://api.minimax.io/v1
+
+Instalacja (zamknij Cursor całkowicie!):
+
+  cd /ścieżka/do/repo/akm-bridge
+  bash minimax-dual-setup/local-cursor/install.sh
+
+Co robi skrypt:
+  - Tworzy ~/.cursor-minimax/local.env (osobny plik, tylko na Twoim PC)
+  - Patchuje state.vscdb (API key + base URL + modele)
+  - Aktualizuje settings.json
+  - Backup: state.vscdb.bak-minimax
+
+Po instalacji:
+  1. Uruchom Cursor
+  2. Settings → Models → OpenAI API Key = ON (toggle)
+  3. Override OpenAI Base URL = https://api.minimax.io/v1
+  4. View All Models → Add Custom Model → MiniMax-M3
+  5. Włącz toggle przy MiniMax-M3
+  6. Wybierz w pickerze
+
+Jeśli picker pusty:
+  - Sprawdź Cursor Pro
+  - Settings → Network → HTTP Compatibility Mode → HTTP/1.1
+  - Usuń OPENAI_API_KEY / OPENAI_BASE_URL ze zmiennych systemowych (kolidują)
+  - Developer: Reload Window
+
+Weryfikacja:
+  python3 scripts/patch-cursor-minimax-vscdb.py verify
+  python3 scripts/patch-cursor-minimax-vscdb.py inspect
+
+Ścieżki state.vscdb:
+  Linux:   ~/.config/Cursor/User/globalStorage/state.vscdb
+  macOS:   ~/Library/Application Support/Cursor/User/globalStorage/state.vscdb
+  Windows: %APPDATA%\Cursor\User\globalStorage\state.vscdb
+
+================================================================================
+5. MINIMAX — MODELE I API
+================================================================================
+
+Endpoint:     https://api.minimax.io/v1
+Chat API:     https://api.minimax.io/v1/chat/completions
+Auth:         Authorization: Bearer <MINIMAX_API_KEY>
+
+Modele do dodania w Cursor (dokładne nazwy):
+  1. MiniMax-M3                  ← primary (kodowanie/agenci)
+  2. MiniMax-M2.7-highspeed      ← szybki fallback
+  3. MiniMax-M2.7                ← stabilny fallback
+  4. MiniMax-M2.5
+  5. MiniMax-M2.5-highspeed
+  6. MiniMax-M2.1
+  7. MiniMax-M2
+
+Wynik testów API (serwer A): wszystkie 7 = PASS
+
+Klucz API:
+  - Tymczasowy, podany na czacie — ZROTOWAĆ po testach
+  - NIE commitować do gita
+  - Urządzenie A: /workspace/.env
+  - Urządzenie B: ~/.cursor-minimax/local.env
+
+================================================================================
+6. SSH / VPS WORDPRESS — STATUS I ODBLOKOWANIE
+================================================================================
+
+Projekt:  The Meridian / Strategikon na VPS netcup
+Domena:   TheMeridian.com.pl
+Ścieżki:  /var/www/strategikon, /opt/strategikon (do weryfikacji po SSH)
+
+Status SSH z Cloud Agenta: FAIL
+  - Alias netcup nierozwiązywalny w środowisku agenta
+  - Brak IP/hostname VPS od użytkownika
+  - Konto wpagent: NIE utworzono (brak admin SSH)
+
+Przygotowane (branch cursor/agent-server-access-setup-dc95):
+  - Klucz publiczny Cursor: id_ed25519_wpagent_cursor
+  - Fingerprint: SHA256:lYxbNwvcFDKXyZNaTLGct1OmU5puHbIGrGteer3wq9E
+  - Skrypt bootstrap VPS: agent-server-access-.../scripts/vps-bootstrap-wpagent.sh
+  - Szablon SSH: agent-server-access-.../scripts/ssh-config-netcup.template
+
+Odblokowanie SSH (3 kroki):
+  A) Podaj IP/hostname VPS (nie-sekret)
+  B) Na VPS jako root/admin uruchom vps-bootstrap-wpagent.sh
+  C) Skonfiguruj ~/.ssh/config z aliasem netcup, test BatchMode
+
+MiniMax — co wkleić po SSH (context-builder, opcja 1):
+  Wybierz opcję 1 — realna inspekcja VPS przez SSH.
+  Konto: wpagent. Tryb read-only. Zapis tylko w katalogu dowodów.
+  Nie modyfikuj WordPressa, Dockera, nginx, bazy, Cloudflare.
+
+================================================================================
+7. PLIKI I ŚCIEŻKI W REPO
+================================================================================
+
+HANDOFF (ten plik):
+  HANDOFF-POBIERZ.txt
+
+MiniMax — dwa urządzenia:
+  minimax-dual-setup/00-DWA-URZADZENIA.md
+  minimax-dual-setup/cloud-agent/install.sh
+  minimax-dual-setup/cloud-agent/status.sh
+  minimax-dual-setup/local-cursor/install.sh
+  minimax-dual-setup/local-cursor/README.md
+
+MiniMax — dowody i troubleshooting:
+  cursor-minimax-setup-evidence-20260618-115808/
+  cursor-minimax-setup-evidence-20260618-115808/06-MODEL-PICKER-FIX.md
+
+Skrypty:
+  scripts/patch-cursor-minimax-vscdb.py
+  scripts/install-cursor-minimax-desktop.sh
+  scripts/apply-minimax-env.sh
+  scripts/validate-minimax-models.sh (w evidence)
+
+SSH (osobny branch/PR):
+  agent-server-access-20260618-105703/  (branch agent-server-access-setup)
+
+PR GitHub:
+  #11 — MiniMax API / dual setup
+  #10 — SSH bootstrap VPS
+  #9  — MiniMax unblock WordPress context
+
+================================================================================
+8. KOMENDY DO WKLEJENIA (COPY-PASTE)
+================================================================================
+
+--- A) Status serwera (Cloud Agent) ---
+bash minimax-dual-setup/cloud-agent/status.sh
+
+--- B) Instalacja lokalnego Cursor (PC, Cursor zamknięty) ---
+bash minimax-dual-setup/local-cursor/install.sh
+
+--- C) Weryfikacja lokalnego Cursor ---
+python3 scripts/patch-cursor-minimax-vscdb.py verify
+
+--- D) MiniMax — wygeneruj klucz SSH w MiniMax (wklej do MiniMax) ---
+Wygeneruj w tym środowisku MiniMax dedykowaną parę kluczy SSH ed25519
+do dostępu do VPS WordPress. NIE drukuj klucza prywatnego. Zwróć TYLKO
+linię klucza publicznego ssh-ed25519. Nie łącz się z serwerem aż potwierdzę
+autoryzację na wpagent.
+
+--- E) Test SSH po skonfigurowaniu netcup ---
+ssh -o BatchMode=yes -o ConnectTimeout=10 netcup 'echo SSH_OK; whoami; hostname'
+
+================================================================================
+9. BEZPIECZEŃSTWO I ROTACJA KLUCZY
+================================================================================
+
+NIE wklejaj na czat:
+  - haseł, kluczy prywatnych SSH, tokenów API po rotacji
+  - haseł DB, soli WordPress, kluczy Cloudflare
+
+Zrób po testach:
+  1. Wygeneruj nowy klucz MiniMax w panelu MiniMax
+  2. Podmień w /workspace/.env (serwer A)
+  3. Podmień w ~/.cursor-minimax/local.env (PC, urządzenie B)
+  4. Unieważnij stary klucz w panelu MiniMax
+  5. Stary klucz był widoczny na czacie — traktuj jako skompromitowany
+
+Produkcja WordPress:
+  - Zero zapisów bez osobnej zgody
+  - Context-builder = read-only + katalog dowodów
+
+================================================================================
+10. OTWARTE PYTANIA (OD UŻYTKOWNIKA)
+================================================================================
+
+1. IP lub hostname VPS netcup?
+2. User admin do bootstrapu (root/inny)?
+3. Potwierdzenie konta wpagent?
+4. Czy masz Cursor Pro? (wymagane dla MiniMax w pickerze)
+5. Czy chcesz później profil sudo dla wpagent? (draft przygotowany, niezainstalowany)
+
+================================================================================
+11. NASTĘPNE KROKI DLA AGENTA NADZORUJĄCEGO
+================================================================================
+
+Priorytet 1 — Lokalny Cursor (urządzenie B):
+  Użytkownik na komputerze: local-cursor/install.sh → MiniMax-M3 w pickerze
+
+Priorytet 2 — SSH VPS:
+  IP od użytkownika → bootstrap wpagent → context-builder read-only WordPress
+
+Priorytet 3 — Rotacja klucza MiniMax:
+  Po udanych testach — nowy klucz, stary unieważnić
+
+Priorytet 4 — Supervising handoff WordPress:
+  Po SSH: zebrać inwentarz WP, motywy, MU-pluginy, Docker, nginx
+  Główny plik docelowy: 07-SUPERVISING-AGENT-HANDOFF.md (na VPS w katalogu dowodów)
+
+Guardrails (zawsze):
+  - Nie modyfikuj produkcji bez jawnej zgody
+  - Nie udawaj inspekcji serwera bez SSH
+  - Nie loguj sekretów
+  - Dwa urządzenia = dwa setupy (A ≠ B)
+
+================================================================================
+KONIEC HANDOFF
+================================================================================
+Wygenerowano: 2026-06-18 | Cursor Cloud Agent | bez sekretów w treści
