@@ -24,6 +24,22 @@ bun run start:http     # HTTP API
 bun run dev:mcp        # MCP from source (tsx)
 ```
 
+## MiniMax Setup (Cursor Cloud)
+
+If your local machine already uses MiniMax but the cloud agent does not:
+
+1. Copy `.env.example` to `.env`
+2. Set `MINIMAX_API_KEY` (or `OPENAI_API_KEY`)
+3. Keep `OPENAI_BASE_URL=https://api.minimax.io/v1`
+4. Run:
+
+```bash
+bash scripts/apply-minimax-env.sh
+```
+
+The repository also includes `.cursor/environment.json` so cloud sessions get
+the MiniMax base URL and default model (`MiniMax-M3`).
+
 ## Architecture
 
 ```
