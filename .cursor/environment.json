@@ -1,0 +1,8 @@
+{
+  "install": "bash /workspace/scripts/apply-minimax-env.sh >/dev/null 2>&1 || true",
+  "env": {
+    "MINIMAX_BASE_URL": "https://api.minimax.io/v1",
+    "OPENAI_BASE_URL": "https://api.minimax.io/v1",
+    "MINIMAX_MODEL": "MiniMax-M3"
+  }
+}
