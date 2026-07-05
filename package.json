@@ -35,7 +35,7 @@
     "capacity:burst": "tsx scripts/run-capacity-tests.ts --burst"
   },
   "dependencies": {
-    "tsx": "^4.22.4"
+    "tsx": "^4.23.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
